@@ -1,0 +1,1893 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MediLens AI – Asisten Pintar Keamanan Obat untuk Semua (12 Screens)</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <style>
+    :root {
+      --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      font-family: var(--font-main);
+      background: linear-gradient(145deg, #dce9f9 0%, #e8f0fc 50%, #dbe7f8 100%);
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      color: #1e293b;
+      overflow-x: hidden;
+    }
+
+    /* Layout Grid for 12 Screens (6 columns x 2 rows on desktop like reference) */
+    .showcase-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 320px);
+      gap: 22px;
+      justify-content: center;
+      padding: 20px 28px 60px 28px;
+      transform-origin: top center;
+      transition: transform 0.25s ease;
+    }
+
+    @media (max-width: 2000px) {
+      .showcase-grid.auto-fit {
+        transform: scale(0.76);
+        margin-bottom: -320px;
+      }
+    }
+    @media (max-width: 1560px) {
+      .showcase-grid.auto-fit {
+        transform: scale(0.62);
+        margin-bottom: -520px;
+      }
+    }
+    @media (max-width: 1240px) {
+      .showcase-grid.auto-fit {
+        transform: none;
+        margin-bottom: 0;
+        grid-template-columns: repeat(auto-fit, 320px);
+      }
+    }
+
+    /* Phone Frame Card */
+    .phone-frame {
+      width: 320px;
+      height: 676px;
+      background: linear-gradient(180deg, #ebf3ff 0%, #f6f9ff 45%, #eef4ff 100%);
+      border-radius: 38px;
+      box-shadow:
+        0 18px 40px -10px rgba(25, 59, 118, 0.16),
+        0 4px 12px rgba(25, 59, 118, 0.07),
+        inset 0 0 0 3px rgba(255, 255, 255, 0.85);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease;
+    }
+
+    .phone-frame:hover {
+      transform: translateY(-4px);
+      box-shadow:
+        0 24px 48px -10px rgba(29, 78, 216, 0.24),
+        0 6px 16px rgba(25, 59, 118, 0.1),
+        inset 0 0 0 3px #ffffff;
+    }
+
+    /* Dark Mode Phone Frames */
+    .phone-frame.dark-camera {
+      background: #0d131f;
+      color: #ffffff;
+      box-shadow:
+        0 18px 40px -10px rgba(10, 15, 30, 0.35),
+        inset 0 0 0 3px rgba(255, 255, 255, 0.18);
+    }
+
+    /* Primary Blue-Purple Gradient Button */
+    .btn-primary-grad {
+      background: linear-gradient(90deg, #0072ff 0%, #4b5dff 50%, #9346ff 100%);
+      box-shadow: 0 8px 20px -4px rgba(75, 93, 255, 0.48);
+      color: #ffffff;
+      transition: all 0.2s ease;
+    }
+    .btn-primary-grad:hover {
+      filter: brightness(1.06);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 24px -4px rgba(75, 93, 255, 0.62);
+    }
+    .btn-primary-grad:active {
+      transform: translateY(0);
+    }
+
+    /* Hero Card Gradient on Screen 2 */
+    .hero-scan-grad {
+      background: linear-gradient(125deg, #2764ff 0%, #4e54ff 52%, #8645ff 100%);
+      box-shadow: 0 12px 26px -6px rgba(61, 88, 255, 0.45);
+    }
+
+    /* Glassmorphic White Card */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      box-shadow: 0 4px 16px -2px rgba(30, 64, 175, 0.06);
+    }
+
+    /* Text Gradient for "AI" */
+    .text-ai-grad {
+      background: linear-gradient(90deg, #2563eb 0%, #7c3aed 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Subtle Floating Pill Blobs for Screen 1 & 12 */
+    .pill-blob {
+      position: absolute;
+      border-radius: 999px;
+      filter: blur(1px);
+      pointer-events: none;
+    }
+
+    /* Waveform Bars Animation */
+    @keyframes wavePulse {
+      0%, 100% { transform: scaleY(0.35); }
+      50% { transform: scaleY(1.15); }
+    }
+    .wave-bar {
+      transform-origin: center;
+      transition: transform 0.2s ease;
+    }
+    .playing-audio .wave-bar {
+      animation: wavePulse 0.75s ease-in-out infinite;
+    }
+
+    /* Scanner Laser Line Animation on Screen 3 & 4 */
+    @keyframes scanLaser {
+      0%, 100% { top: 10%; opacity: 0.75; }
+      50% { top: 86%; opacity: 1; }
+    }
+    .laser-line {
+      position: absolute;
+      left: 6%;
+      right: 6%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #38bdf8, #818cf8, #38bdf8, transparent);
+      box-shadow: 0 0 12px 2px rgba(56, 189, 248, 0.8);
+      animation: scanLaser 3.2s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    /* Orb Pulse Animation on Screen 4 */
+    @keyframes orbGlow {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 28px rgba(59, 130, 246, 0.35), 0 0 55px rgba(139, 92, 246, 0.25); }
+      50% { transform: scale(1.04); box-shadow: 0 0 38px rgba(59, 130, 246, 0.55), 0 0 70px rgba(139, 92, 246, 0.4); }
+    }
+    .ai-orb {
+      animation: orbGlow 2.6s ease-in-out infinite;
+    }
+
+    /* Custom Scrollbar for inner content if needed */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP FLOATING NAVIGATION & MODE CONTROLLER -->
+  <header class="sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-blue-100 shadow-sm px-4 py-2.5">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <!-- Brand Identity -->
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/30">
+          <i class="fa-solid fa-plus text-lg font-extrabold"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-extrabold text-slate-800 text-base tracking-tight">MediLens <span class="text-ai-grad">AI</span></h1>
+            <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200">12 Full UI Screens</span>
+          </div>
+          <p class="text-[11px] text-slate-500 hidden sm:block">Asisten Pintar Keamanan Obat & Resep Pintar • Klik elemen di layar untuk mencoba fitur</p>
+        </div>
+      </div>
+
+      <!-- Mode Switcher & Controls -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <div class="bg-slate-100 p-1 rounded-xl flex items-center gap-1 border border-slate-200/80">
+          <button id="btnModeGrid" onclick="setViewMode('grid')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-blue-600 shadow-sm flex items-center gap-1.5">
+            <i class="fa-solid fa-table-cells"></i> Semua 12 Layar (6×2)
+          </button>
+          <button id="btnModeSingle" onclick="setViewMode('single')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-slate-900 flex items-center gap-1.5">
+            <i class="fa-solid fa-mobile-screen-button"></i> Simulasi 1 HP Interaktif
+          </button>
+        </div>
+
+        <button id="btnZoomToggle" onclick="toggleGridZoom()" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition flex items-center gap-1.5" title="Sesuaikan ukuran 12 layar dengan layar monitor">
+          <i class="fa-solid fa-magnifying-glass-minus" id="zoomIcon"></i>
+          <span id="zoomLabel">Ukuran 100%</span>
+        </button>
+
+        <button onclick="speakIndonesianSummary()" class="px-3.5 py-1.5 rounded-xl text-xs font-bold btn-primary-grad flex items-center gap-1.5">
+          <i class="fa-solid fa-volume-high"></i> Tes Suara AI
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Screen Jump Bar (Shown in Interactive Single Mode) -->
+    <div id="singleModeNav" class="hidden max-w-5xl mx-auto pt-2.5 mt-2 border-t border-slate-200/70 flex items-center justify-center gap-1.5 flex-wrap">
+      <span class="text-[11px] font-bold text-slate-400 mr-1">Lompat ke Layar:</span>
+      <button onclick="goToScreen(1)" class="screen-pill px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-600 text-white" data-screen-btn="1">1. Splash</button>
+      <button onclick="goToScreen(2)" class="screen-pill px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-blue-50" data-screen-btn="2">2. Beranda</button>
+      <button onclick="goToScreen(3)" class="screen-pill px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-blue-50" data-screen-btn="3">3. Kamera Scan</button>
+      <button onclick="goToScreen(4)" class="screen-pill px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-blue-50" data-screen-btn="4">4. Menganalisis</button>
+      <button onclick="goToScreen(5)" class="screen-pill px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-blue-50" data-screen-btn="5">5. Hasil Analisis</button>
+      <button onclick="goToScreen(6)" class="screen-pill px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-blue-50" data-screen-btn="6">6. Detail Obat</button>
+      <button onclick="goToScreen(7)" class="screen-pill px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-blue-50" data-screen-btn="7">7. Daftar Obat</button>
+      <button onclick="goToScreen(8)" class="screen-pill px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-blue-50" data-screen-btn="8">8. Interaksi Obat</button>
+      <button onclick="goToScreen(9)" class="screen-pill px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-blue-50" data-screen-btn="9">9. Pantangan</button>
+      <button onclick="goToScreen(10)" class="screen-pill px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-blue-50" data-screen-btn="10">10. Jadwal</button>
+      <button onclick="goToScreen(11)" class="screen-pill px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-blue-50" data-screen-btn="11">11. Profil</button>
+      <button onclick="goToScreen(12)" class="screen-pill px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-blue-50" data-screen-btn="12">12. Panduan Suara</button>
+    </div>
+  </header>
+
+  <!-- REUSABLE SVG DEFINITIONS FOR 3D MEDICINE BOXES & ILLUSTRATIONS -->
+  <svg width="0" height="0" class="hidden">
+    <defs>
+      <!-- 1. Amlodipine 5mg 3D Box Thumbnail -->
+      <g id="box-amlodipine">
+        <rect width="46" height="46" rx="10" fill="#f1f5f9"/>
+        <!-- Shadow -->
+        <ellipse cx="23" cy="39" rx="16" ry="3" fill="rgba(15,23,42,0.12)"/>
+        <!-- 3D Left Side -->
+        <polygon points="7,14 13,10 13,34 7,38" fill="#cbd5e1"/>
+        <!-- 3D Top Side -->
+        <polygon points="7,14 13,10 39,13 33,17" fill="#f8fafc"/>
+        <!-- Front Face -->
+        <polygon points="13,10 39,13 39,37 13,34" fill="#ffffff" stroke="#cbd5e1" stroke-width="0.6"/>
+        <!-- Blue Pharma Banner -->
+        <polygon points="13,10 39,13 39,17 13,14" fill="#1d4ed8"/>
+        <polygon points="13,27 39,30 39,35 13,32" fill="#2563eb"/>
+        <!-- Text Representation -->
+        <text x="15.5" y="21.5" font-size="4.3" font-weight="800" fill="#0f172a" font-family="sans-serif">Amlodipine</text>
+        <text x="15.5" y="25.8" font-size="3.8" font-weight="700" fill="#2563eb" font-family="sans-serif">5 mg</text>
+        <!-- Blister Pack in front -->
+        <rect x="25" y="28" width="14" height="9" rx="1.5" transform="rotate(-8 25 28)" fill="#e2e8f0" stroke="#94a3b8" stroke-width="0.5"/>
+        <circle cx="29" cy="31" r="1.4" fill="#3b82f6"/>
+        <circle cx="34" cy="30.5" r="1.4" fill="#3b82f6"/>
+        <circle cx="29.5" cy="34.2" r="1.4" fill="#3b82f6"/>
+        <circle cx="34.5" cy="33.5" r="1.4" fill="#3b82f6"/>
+      </g>
+
+      <!-- 2. Simvastatin 20mg 3D Box Thumbnail -->
+      <g id="box-simvastatin">
+        <rect width="46" height="46" rx="10" fill="#fff7ed"/>
+        <ellipse cx="23" cy="39" rx="16" ry="3" fill="rgba(15,23,42,0.12)"/>
+        <!-- 3D Left Side -->
+        <polygon points="7,14 13,10 13,34 7,38" fill="#fed7aa"/>
+        <!-- Front Face -->
+        <polygon points="13,10 39,13 39,37 13,34" fill="#ffffff" stroke="#fdba74" stroke-width="0.6"/>
+        <!-- Red/Orange Pharma Stripes -->
+        <polygon points="13,10 39,13 39,17.5 13,14.5" fill="#dc2626"/>
+        <polygon points="13,27 39,30 39,35 13,32" fill="#ea580c"/>
+        <text x="15" y="21.5" font-size="4.1" font-weight="800" fill="#1e293b" font-family="sans-serif">Simvastatin</text>
+        <text x="15" y="25.8" font-size="3.7" font-weight="700" fill="#dc2626" font-family="sans-serif">20 mg</text>
+        <!-- Blister Pack -->
+        <rect x="25" y="28" width="14" height="9" rx="1.5" transform="rotate(-6 25 28)" fill="#f1f5f9" stroke="#94a3b8" stroke-width="0.5"/>
+        <circle cx="29" cy="31" r="1.4" fill="#ea580c"/>
+        <circle cx="34" cy="30.5" r="1.4" fill="#ea580c"/>
+        <circle cx="29.5" cy="34.2" r="1.4" fill="#ea580c"/>
+        <circle cx="34.5" cy="33.5" r="1.4" fill="#ea580c"/>
+      </g>
+
+      <!-- 3. Omeprazole 20mg 3D Box Thumbnail -->
+      <g id="box-omeprazole">
+        <rect width="46" height="46" rx="10" fill="#f5f3ff"/>
+        <ellipse cx="23" cy="39" rx="16" ry="3" fill="rgba(15,23,42,0.12)"/>
+        <!-- 3D Left Side -->
+        <polygon points="7,14 13,10 13,34 7,38" fill="#ddd6fe"/>
+        <!-- Front Face -->
+        <polygon points="13,10 39,13 39,37 13,34" fill="#ffffff" stroke="#c4b5fd" stroke-width="0.6"/>
+        <!-- Purple Pharma Stripes -->
+        <polygon points="13,10 39,13 39,17 13,14" fill="#7c3aed"/>
+        <polygon points="13,27 39,30 39,35 13,32" fill="#6d28d9"/>
+        <text x="15" y="21.5" font-size="4.1" font-weight="800" fill="#1e293b" font-family="sans-serif">Omeprazole</text>
+        <text x="15" y="25.8" font-size="3.7" font-weight="700" fill="#7c3aed" font-family="sans-serif">20 mg</text>
+        <!-- Blister Pack -->
+        <rect x="25" y="28" width="14" height="9" rx="1.5" transform="rotate(-6 25 28)" fill="#f1f5f9" stroke="#94a3b8" stroke-width="0.5"/>
+        <circle cx="29" cy="31" r="1.4" fill="#8b5cf6"/>
+        <circle cx="34" cy="30.5" r="1.4" fill="#8b5cf6"/>
+        <circle cx="29.5" cy="34.2" r="1.4" fill="#8b5cf6"/>
+        <circle cx="34.5" cy="33.5" r="1.4" fill="#8b5cf6"/>
+      </g>
+    </defs>
+  </svg>
+
+  <!-- MAIN CONTAINER FOR ALL 12 SCREENS -->
+  <main id="screensContainer" class="showcase-grid auto-fit">
+
+    <!-- =====================================================================
+         SCREEN 1: ONBOARDING / SPLASH SCREEN
+         ===================================================================== -->
+    <section class="phone-frame" data-screen="1">
+      <!-- Floating Decorative Blurred Capsules -->
+      <div class="pill-blob w-12 h-6 bg-pink-300/40 rotate-45 top-28 -left-3"></div>
+      <div class="pill-blob w-10 h-5 bg-blue-300/40 -rotate-12 top-20 right-6"></div>
+      <div class="pill-blob w-14 h-7 bg-purple-300/35 rotate-12 top-52 -right-3"></div>
+      <div class="pill-blob w-12 h-6 bg-cyan-300/35 -rotate-45 bottom-24 -left-2"></div>
+      <div class="pill-blob w-16 h-8 bg-purple-400/25 rotate-12 -bottom-2 right-6"></div>
+
+      <!-- Status Bar -->
+      <div class="px-6 pt-3 pb-1 flex justify-between items-center text-[11px] font-bold text-slate-800 z-10">
+        <span>9:41</span>
+        <div class="flex items-center gap-1.5 text-[10px]">
+          <i class="fa-solid fa-signal"></i>
+          <i class="fa-solid fa-wifi"></i>
+          <i class="fa-solid fa-battery-full text-xs"></i>
+        </div>
+      </div>
+
+      <!-- Center Content -->
+      <div class="flex-1 flex flex-col items-center px-6 pt-10 pb-6 z-10 text-center">
+        <!-- 3D Glowing Medical Cross Icon -->
+        <div class="relative mb-5">
+          <div class="absolute -inset-3 rounded-[28px] bg-gradient-to-tr from-blue-500/40 via-indigo-400/30 to-purple-500/40 blur-xl"></div>
+          <div class="w-24 h-24 rounded-[26px] bg-gradient-to-b from-white/95 to-blue-50/90 p-2 shadow-xl border border-white relative flex items-center justify-center">
+            <!-- 3D Cross SVG -->
+            <svg viewBox="0 0 80 80" class="w-16 h-16 drop-shadow-md">
+              <defs>
+                <linearGradient id="crossGrad1" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#38bdf8"/>
+                  <stop offset="45%" stop-color="#2563eb"/>
+                  <stop offset="100%" stop-color="#1e1b4b"/>
+                </linearGradient>
+                <linearGradient id="crossGrad2" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="#a855f7"/>
+                  <stop offset="100%" stop-color="#3b82f6"/>
+                </linearGradient>
+              </defs>
+              <path d="M28 10 H52 A6 6 0 0 1 58 16 V28 H70 A6 6 0 0 1 76 34 V46 A6 6 0 0 1 70 52 H58 V64 A6 6 0 0 1 52 70 H28 A6 6 0 0 1 22 64 V52 H10 A6 6 0 0 1 4 46 V34 A6 6 0 0 1 10 28 H22 V16 A6 6 0 0 1 28 10 Z" fill="url(#crossGrad1)"/>
+              <path d="M28 10 H42 V40 H10 A6 6 0 0 1 4 34 V34 A6 6 0 0 1 10 28 H22 V16 A6 6 0 0 1 28 10 Z" fill="url(#crossGrad2)" opacity="0.75"/>
+              <circle cx="28" cy="24" r="2" fill="#fff" opacity="0.8"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- App Title -->
+        <h2 class="text-[28px] font-extrabold tracking-tight text-[#172554] leading-tight">
+          MediLens <span class="text-ai-grad">AI</span>
+        </h2>
+        <p class="text-[13px] font-medium text-slate-600 mt-1.5 leading-snug max-w-[220px]">
+          Asisten Pintar Keamanan Obat untuk Semua
+        </p>
+
+        <!-- 3 Key Feature List Items -->
+        <div class="w-full mt-8 space-y-3.5 text-left pl-3">
+          <div class="flex items-center gap-3.5">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/25 shrink-0">
+              <i class="fa-solid fa-camera text-sm"></i>
+            </div>
+            <span class="text-[13.5px] font-semibold text-slate-700">Pindai obat sekaligus</span>
+          </div>
+
+          <div class="flex items-center gap-3.5">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/25 shrink-0">
+              <i class="fa-solid fa-shield-halved text-sm"></i>
+            </div>
+            <span class="text-[13.5px] font-semibold text-slate-700">Deteksi interaksi</span>
+          </div>
+
+          <div class="flex items-center gap-3.5">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center shadow-md shadow-blue-500/25 shrink-0">
+              <i class="fa-solid fa-microphone text-sm"></i>
+            </div>
+            <span class="text-[13.5px] font-semibold text-slate-700">Panduan suara otomatis</span>
+          </div>
+        </div>
+
+        <!-- Bottom Action Buttons -->
+        <div class="mt-auto w-full pt-4">
+          <button onclick="goToScreen(2)" class="w-full py-3.5 rounded-full btn-primary-grad font-bold text-[14px] flex items-center justify-center gap-2">
+            <span>Mulai Sekarang</span>
+            <i class="fa-solid fa-arrow-right text-xs"></i>
+          </button>
+          <button onclick="goToScreen(2)" class="mt-3 text-[12.5px] font-semibold text-slate-500 hover:text-slate-800 underline underline-offset-4">
+            Lewati
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         SCREEN 2: BERANDA (HOME DASHBOARD)
+         ===================================================================== -->
+    <section class="phone-frame" data-screen="2">
+      <!-- Status Bar -->
+      <div class="px-6 pt-3 pb-1 flex justify-between items-center text-[11px] font-bold text-slate-800">
+        <span>9:41</span>
+        <div class="flex items-center gap-1.5 text-[10px]">
+          <i class="fa-solid fa-signal"></i>
+          <i class="fa-solid fa-wifi"></i>
+          <i class="fa-solid fa-battery-full text-xs"></i>
+        </div>
+      </div>
+
+      <!-- Header -->
+      <div class="px-5 pt-3 pb-2 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white shadow-sm">
+            <i class="fa-solid fa-plus text-xs"></i>
+          </div>
+          <span class="text-[18px] font-extrabold text-[#172554]">MediLens <span class="text-ai-grad">AI</span></span>
+        </div>
+        <button onclick="showToast('Tidak ada notifikasi baru hari ini')" class="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center text-slate-600 hover:text-blue-600 shadow-sm">
+          <i class="fa-regular fa-bell text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Subtitle -->
+      <div class="px-5 mb-3.5">
+        <p class="text-[13px] font-medium text-slate-600 leading-snug">
+          Pindai obat, pahami risiko,<br/>konsumsi dengan aman.
+        </p>
+      </div>
+
+      <!-- Hero Action Card: Pindai Obat Sekaligus -->
+      <div class="px-5 mb-4">
+        <div onclick="goToScreen(3)" class="hero-scan-grad rounded-2xl p-4 text-white flex items-center gap-3.5 cursor-pointer transition transform hover:scale-[1.01] relative overflow-hidden">
+          <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center shrink-0">
+            <div class="w-9 h-9 rounded-xl bg-white text-blue-600 flex items-center justify-center shadow">
+              <i class="fa-solid fa-camera text-base"></i>
+            </div>
+          </div>
+          <div class="flex-1 min-w-0">
+            <h3 class="font-bold text-[15px] leading-tight">Pindai Obat<br/>Sekaligus</h3>
+            <p class="text-[11px] text-blue-100 mt-1 leading-tight">Foto beberapa obat, strip atau resep</p>
+          </div>
+          <i class="fa-solid fa-chevron-right text-xs text-white/80"></i>
+        </div>
+      </div>
+
+      <!-- 2x2 Feature Grid -->
+      <div class="px-5 grid grid-cols-2 gap-3 flex-1 content-start">
+        <!-- Card 1: Riwayat Pemindaian -->
+        <div onclick="goToScreen(7)" class="glass-card rounded-2xl p-3.5 cursor-pointer hover:border-blue-300 transition flex flex-col justify-between h-[116px]">
+          <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-sm">
+            <i class="fa-solid fa-file-waveform text-sm"></i>
+          </div>
+          <div>
+            <h4 class="font-bold text-[12.5px] text-slate-800 leading-tight">Riwayat<br/>Pemindaian</h4>
+          </div>
+        </div>
+
+        <!-- Card 2: Obat Saya -->
+        <div onclick="goToScreen(10)" class="glass-card rounded-2xl p-3.5 cursor-pointer hover:border-blue-300 transition flex flex-col justify-between h-[116px]">
+          <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-500 flex items-center justify-center shadow-sm">
+            <i class="fa-solid fa-Notes-medical fa-kit-medical text-sm"></i>
+          </div>
+          <div>
+            <h4 class="font-bold text-[12.5px] text-slate-800 leading-tight">Obat Saya</h4>
+            <p class="text-[10.5px] text-slate-400 mt-0.5">Kelola jadwal</p>
+          </div>
+        </div>
+
+        <!-- Card 3: Profil Kesehatan -->
+        <div onclick="goToScreen(11)" class="glass-card rounded-2xl p-3.5 cursor-pointer hover:border-blue-300 transition flex flex-col justify-between h-[116px]">
+          <div class="w-9 h-9 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center shadow-sm">
+            <i class="fa-solid fa-hand-holding-medical text-sm"></i>
+          </div>
+          <div>
+            <h4 class="font-bold text-[12.5px] text-slate-800 leading-tight">Profil Kesehatan</h4>
+            <p class="text-[10.5px] text-slate-400 mt-0.5">Alergi, kondisi medis</p>
+          </div>
+        </div>
+
+        <!-- Card 4: Pusat Edukasi -->
+        <div onclick="goToScreen(9)" class="glass-card rounded-2xl p-3.5 cursor-pointer hover:border-blue-300 transition flex flex-col justify-between h-[116px]">
+          <div class="w-9 h-9 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shadow-sm">
+            <i class="fa-solid fa-book-medical text-sm"></i>
+          </div>
+          <div>
+            <h4 class="font-bold text-[12.5px] text-slate-800 leading-tight">Pusat Edukasi</h4>
+            <p class="text-[10.5px] text-slate-400 mt-0.5">Artikel dan tips</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Navigation Bar -->
+      <div class="mt-auto bg-white/95 backdrop-blur-md border-t border-slate-100 px-4 py-2.5 flex justify-between items-center text-[10px] font-semibold text-slate-400">
+        <button onclick="goToScreen(2)" class="flex flex-col items-center gap-1 text-blue-600">
+          <i class="fa-solid fa-house text-sm"></i>
+          <span>Beranda</span>
+        </button>
+        <button onclick="goToScreen(3)" class="flex flex-col items-center gap-1 hover:text-blue-600">
+          <i class="fa-solid fa-expand text-sm"></i>
+          <span>Scan</span>
+        </button>
+        <button onclick="goToScreen(7)" class="flex flex-col items-center gap-1 hover:text-blue-600">
+          <i class="fa-solid fa-briefcase-medical text-sm"></i>
+          <span>Obat Saya</span>
+        </button>
+        <button onclick="goToScreen(9)" class="flex flex-col items-center gap-1 hover:text-blue-600">
+          <i class="fa-solid fa-book-open text-sm"></i>
+          <span>Edukasi</span>
+        </button>
+        <button onclick="goToScreen(11)" class="flex flex-col items-center gap-1 hover:text-blue-600">
+          <i class="fa-regular fa-user text-sm"></i>
+          <span>Profil</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         SCREEN 3: KAMERA PEMINDAI (PINDAI BEBERAPA OBAT SEKALIGUS)
+         ===================================================================== -->
+    <section class="phone-frame dark-camera" data-screen="3">
+      <!-- Status Bar -->
+      <div class="px-6 pt-3 pb-1 flex justify-between items-center text-[11px] font-bold text-white">
+        <span>9:41</span>
+        <div class="flex items-center gap-1.5 text-[10px]">
+          <i class="fa-solid fa-signal"></i>
+          <i class="fa-solid fa-wifi"></i>
+          <i class="fa-solid fa-battery-full text-xs"></i>
+        </div>
+      </div>
+
+      <!-- Top Bar -->
+      <div class="px-5 pt-2 pb-1 flex items-center justify-between">
+        <button onclick="goToScreen(2)" class="w-7 h-7 flex items-center justify-center text-white/90 hover:text-white">
+          <i class="fa-solid fa-arrow-left text-sm"></i>
+        </button>
+        <h3 class="text-[13.5px] font-bold text-center leading-tight">Pindai Beberapa Obat<br/>Sekaligus</h3>
+        <button onclick="goToScreen(4)" class="w-7 h-7 flex items-center justify-center text-white/90">
+          <i class="fa-solid fa-expand text-sm"></i>
+        </button>
+      </div>
+
+      <p class="px-6 text-center text-[10.5px] text-slate-300 mb-3 leading-snug">
+        Arahkan kamera ke kemasan, strip obat,<br/>atau resep dokter.
+      </p>
+
+      <!-- Camera Viewfinder Frame -->
+      <div class="mx-4 flex-1 rounded-2xl relative overflow-hidden border border-slate-700/80 shadow-inner" style="background: linear-gradient(160deg, #7c4d2b 0%, #5c3419 55%, #3d210e 100%);">
+        <!-- Wood Grain Lines -->
+        <div class="absolute inset-0 opacity-20" style="background-image: repeating-linear-gradient(18deg, transparent, transparent 14px, rgba(0,0,0,0.3) 15px, transparent 16px);"></div>
+
+        <!-- Realistic 3D Medicine Boxes & Blister Strips Illustration inside Camera -->
+        <svg viewBox="0 0 280 340" class="w-full h-full object-cover">
+          <!-- Soft Table Lighting -->
+          <radialGradient id="tableLight" cx="50%" cy="45%" r="60%">
+            <stop offset="0%" stop-color="rgba(255,245,230,0.25)"/>
+            <stop offset="100%" stop-color="rgba(0,0,0,0.35)"/>
+          </radialGradient>
+          <rect width="280" height="340" fill="url(#tableLight)"/>
+
+          <!-- 1. Amlodipine 5 mg Box (Top Left) -->
+          <g transform="translate(12, 26) rotate(-11)">
+            <!-- Drop shadow -->
+            <polygon points="8,18 118,22 118,95 8,92" fill="rgba(0,0,0,0.35)" transform="translate(4,6)"/>
+            <!-- Top 3D Face -->
+            <polygon points="0,12 18,0 126,5 110,18" fill="#e2e8f0"/>
+            <polygon points="18,0 126,5 120,10 12,5" fill="#1d4ed8"/>
+            <!-- Right 3D Face -->
+            <polygon points="110,18 126,5 124,74 108,88" fill="#cbd5e1"/>
+            <!-- Main Front Face -->
+            <polygon points="0,12 110,18 108,88 0,80" fill="#f8fafc"/>
+            <!-- Blue Pharma Design -->
+            <polygon points="0,12 110,18 110,30 0,24" fill="#2563eb"/>
+            <polygon points="68,16 110,18 108,88 52,84" fill="#dbeafe"/>
+            <polygon points="75,45 109,47 108,76 70,74" fill="#1d4ed8"/>
+            <text x="8" y="45" font-size="13.5" font-weight="800" fill="#1e3a8a" font-family="sans-serif">Amlodipine</text>
+            <text x="9" y="63" font-size="12" font-weight="800" fill="#1d4ed8" font-family="sans-serif">5 mg</text>
+            <rect x="8" y="69" width="38" height="4" rx="2" fill="#94a3b8"/>
+          </g>
+
+          <!-- 2. Simvastatin 20 mg Box (Top Right) -->
+          <g transform="translate(142, 48) rotate(5)">
+            <polygon points="6,18 125,18 125,92 6,92" fill="rgba(0,0,0,0.35)" transform="translate(3,7)"/>
+            <!-- Top 3D Face -->
+            <polygon points="0,14 16,0 130,0 116,14" fill="#fca5a5"/>
+            <!-- Left 3D Face -->
+            <polygon points="0,14 16,0 16,66 0,80" fill="#f87171"/>
+            <!-- Front Face -->
+            <polygon points="0,14 118,14 118,82 0,82" fill="#ffffff"/>
+            <!-- Red Banner -->
+            <rect x="0" y="14" width="118" height="14" fill="#dc2626"/>
+            <rect x="0" y="64" width="118" height="12" fill="#ea580c"/>
+            <text x="10" y="43" font-size="13" font-weight="800" fill="#111827" font-family="sans-serif">Simvastatin</text>
+            <text x="10" y="57" font-size="10.5" font-weight="800" fill="#dc2626" font-family="sans-serif">20 mg</text>
+            <text x="46" y="57" font-size="9" font-weight="700" fill="#475569" font-family="sans-serif">Seda</text>
+          </g>
+
+          <!-- Silver Blister Pack Middle Left -->
+          <g transform="translate(24, 128) rotate(12)">
+            <rect x="2" y="4" width="92" height="54" rx="6" fill="rgba(0,0,0,0.28)"/>
+            <rect x="0" y="0" width="92" height="54" rx="6" fill="#cbd5e1" stroke="#f8fafc" stroke-width="1"/>
+            <!-- 6 metallic pills -->
+            <ellipse cx="20" cy="16" rx="9" ry="6" fill="#94a3b8" stroke="#f1f5f9" stroke-width="1.2"/>
+            <ellipse cx="46" cy="16" rx="9" ry="6" fill="#94a3b8" stroke="#f1f5f9" stroke-width="1.2"/>
+            <ellipse cx="72" cy="16" rx="9" ry="6" fill="#94a3b8" stroke="#f1f5f9" stroke-width="1.2"/>
+            <ellipse cx="20" cy="38" rx="9" ry="6" fill="#94a3b8" stroke="#f1f5f9" stroke-width="1.2"/>
+            <ellipse cx="46" cy="38" rx="9" ry="6" fill="#94a3b8" stroke="#f1f5f9" stroke-width="1.2"/>
+            <ellipse cx="72" cy="38" rx="9" ry="6" fill="#94a3b8" stroke="#f1f5f9" stroke-width="1.2"/>
+          </g>
+
+          <!-- 3. Omeprazole 20 mg Box (Center Bottom) -->
+          <g transform="translate(45, 168) rotate(-16)">
+            <polygon points="6,24 176,24 176,108 6,108" fill="rgba(0,0,0,0.4)" transform="translate(4,8)"/>
+            <!-- Top 3D Face -->
+            <polygon points="0,22 24,0 182,0 158,22" fill="#f3e8ff"/>
+            <text x="34" y="14" font-size="8.5" font-weight="800" fill="#6b21a8" font-family="sans-serif">Omeprazole</text>
+            <!-- Left Side Face -->
+            <polygon points="0,22 24,0 24,62 0,88" fill="#ddd6fe"/>
+            <!-- Front Face -->
+            <polygon points="0,22 158,22 158,92 0,92" fill="#ffffff"/>
+            <!-- Purple Accents -->
+            <rect x="0" y="22" width="38" height="70" fill="#ede9fe"/>
+            <polygon points="105,22 158,22 158,92 88,92" fill="#6d28d9"/>
+            <polygon points="95,22 118,22 100,92 78,92" fill="#a855f7"/>
+            <text x="42" y="54" font-size="14" font-weight="800" fill="#3b0764" font-family="sans-serif">Omeprazole</text>
+            <text x="42" y="72" font-size="12.5" font-weight="800" fill="#6d28d9" font-family="sans-serif">20 mg</text>
+          </g>
+
+          <!-- Foreground Silver Blister Pack (Bottom Right) -->
+          <g transform="translate(152, 232) rotate(14)">
+            <rect x="2" y="5" width="112" height="70" rx="8" fill="rgba(0,0,0,0.38)"/>
+            <rect x="0" y="0" width="112" height="70" rx="8" fill="#e2e8f0" stroke="#ffffff" stroke-width="1"/>
+            <ellipse cx="26" cy="20" rx="11" ry="7.5" fill="#94a3b8" stroke="#ffffff" stroke-width="1.5"/>
+            <ellipse cx="58" cy="20" rx="11" ry="7.5" fill="#94a3b8" stroke="#ffffff" stroke-width="1.5"/>
+            <ellipse cx="90" cy="20" rx="11" ry="7.5" fill="#94a3b8" stroke="#ffffff" stroke-width="1.5"/>
+            <ellipse cx="26" cy="48" rx="11" ry="7.5" fill="#94a3b8" stroke="#ffffff" stroke-width="1.5"/>
+            <ellipse cx="58" cy="48" rx="11" ry="7.5" fill="#94a3b8" stroke="#ffffff" stroke-width="1.5"/>
+            <ellipse cx="90" cy="48" rx="11" ry="7.5" fill="#94a3b8" stroke="#ffffff" stroke-width="1.5"/>
+          </g>
+        </svg>
+
+        <!-- Cyan Viewfinder Corner Brackets -->
+        <div class="absolute top-3 left-3 w-7 h-7 border-t-[3px] border-l-[3px] border-cyan-400 rounded-tl-xl pointer-events-none"></div>
+        <div class="absolute top-3 right-3 w-7 h-7 border-t-[3px] border-r-[3px] border-cyan-400 rounded-tr-xl pointer-events-none"></div>
+        <div class="absolute bottom-3 left-3 w-7 h-7 border-b-[3px] border-l-[3px] border-cyan-400 rounded-bl-xl pointer-events-none"></div>
+        <div class="absolute bottom-3 right-3 w-7 h-7 border-b-[3px] border-r-[3px] border-cyan-400 rounded-br-xl pointer-events-none"></div>
+
+        <!-- Animated Laser Scan Line -->
+        <div class="laser-line"></div>
+
+        <!-- Pagination Dots inside Viewfinder -->
+        <div class="absolute bottom-3 inset-x-0 flex justify-center items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-white/50"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-white/50"></span>
+        </div>
+      </div>
+
+      <!-- Camera Shutter Controls -->
+      <div class="px-8 py-4 flex items-center justify-between">
+        <button onclick="showToast('Lampu Flash Diaktifkan')" class="w-10 h-10 rounded-full bg-slate-800/90 border border-slate-700 text-slate-300 flex items-center justify-center hover:text-white">
+          <i class="fa-solid fa-bolt text-sm"></i>
+        </button>
+
+        <!-- Shutter Button (Navigates to Screen 4 -> 5) -->
+        <button onclick="triggerCameraCapture()" class="w-16 h-16 rounded-full p-1 border-2 border-cyan-400/80 flex items-center justify-center shadow-lg shadow-cyan-500/20 hover:scale-105 transition">
+          <div class="w-full h-full rounded-full bg-white"></div>
+        </button>
+
+        <button onclick="goToScreen(4)" class="w-10 h-10 rounded-full bg-slate-800/90 border border-slate-700 text-slate-300 flex items-center justify-center hover:text-white">
+          <i class="fa-regular fa-image text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Mode Switcher Pill (Foto Obat | Resep) -->
+      <div class="px-8 pb-5">
+        <div class="bg-slate-800/90 rounded-full p-1 flex text-[12px] font-bold">
+          <button class="flex-1 py-1.5 rounded-full bg-white text-slate-900 shadow">Foto Obat</button>
+          <button onclick="showToast('Mode Pindai Resep Dokter')" class="flex-1 py-1.5 rounded-full text-slate-300 hover:text-white">Resep</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         SCREEN 4: MENGANALISIS... (AI LOADING SCREEN)
+         ===================================================================== -->
+    <section class="phone-frame" data-screen="4" onclick="goToScreen(5)">
+      <!-- Status Bar -->
+      <div class="px-6 pt-3 pb-1 flex justify-between items-center text-[11px] font-bold text-slate-800">
+        <span>9:41</span>
+        <div class="flex items-center gap-1.5 text-[10px]">
+          <i class="fa-solid fa-signal"></i>
+          <i class="fa-solid fa-wifi"></i>
+          <i class="fa-solid fa-battery-full text-xs"></i>
+        </div>
+      </div>
+
+      <div class="flex-1 flex flex-col items-center px-6 pt-8 pb-6">
+        <!-- Glowing AI Orb with Medicine Icon -->
+        <div class="relative my-4">
+          <div class="w-32 h-32 rounded-full ai-orb bg-gradient-to-tr from-blue-600 via-indigo-500 to-purple-500 p-1 flex items-center justify-center relative">
+            <div class="w-full h-full rounded-full bg-gradient-to-b from-blue-400/40 via-indigo-600/80 to-slate-900/90 flex items-center justify-center border-2 border-white/60 relative overflow-hidden">
+              <!-- Neon Outline Pills & Box SVG -->
+              <svg viewBox="0 0 80 80" class="w-16 h-16">
+                <rect x="18" y="20" width="32" height="36" rx="4" fill="none" stroke="#e0f2fe" stroke-width="2.5"/>
+                <line x1="24" y1="30" x2="44" y2="30" stroke="#7dd3fc" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="24" y1="38" x2="38" y2="38" stroke="#7dd3fc" stroke-width="2.5" stroke-linecap="round"/>
+                <!-- Pill icon -->
+                <rect x="42" y="38" width="22" height="11" rx="5.5" transform="rotate(-30 42 38)" fill="#38bdf8" stroke="#ffffff" stroke-width="2"/>
+                <circle cx="34" cy="54" r="4.5" fill="#a855f7" stroke="#ffffff" stroke-width="1.5"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="text-[20px] font-extrabold text-[#172554] mt-2 mb-6">Menganalisis...</h3>
+
+        <!-- 6 Step Checklist -->
+        <div class="w-full space-y-3.5 pl-2">
+          <div class="flex items-center gap-3">
+            <div class="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] shadow-sm shrink-0">
+              <i class="fa-solid fa-check"></i>
+            </div>
+            <span class="text-[12.5px] font-semibold text-slate-700">Mendeteksi objek obat</span>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] shadow-sm shrink-0">
+              <i class="fa-solid fa-check"></i>
+            </div>
+            <span class="text-[12.5px] font-semibold text-slate-700">Mengekstrak teks & Exp Date</span>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] shadow-sm shrink-0">
+              <i class="fa-solid fa-check"></i>
+            </div>
+            <span class="text-[12.5px] font-semibold text-slate-700">Mencari kandungan aktif</span>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="w-6 h-6 rounded-full bg-teal-400 text-white flex items-center justify-center text-[10px] shadow-sm shrink-0">
+              <i class="fa-solid fa-check"></i>
+            </div>
+            <span class="text-[12.5px] font-semibold text-slate-700">Menganalisis interaksi obat</span>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="w-6 h-6 rounded-full bg-teal-400 text-white flex items-center justify-center text-[10px] shadow-sm shrink-0">
+              <i class="fa-solid fa-check"></i>
+            </div>
+            <span class="text-[12.5px] font-semibold text-slate-700">Menyusun rekomendasi jadwal</span>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] shadow-sm shrink-0">
+              <i class="fa-solid fa-check"></i>
+            </div>
+            <span class="text-[12.5px] font-semibold text-slate-700">Menyiapkan panduan suara</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         SCREEN 5: HASIL ANALISIS
+         ===================================================================== -->
+    <section class="phone-frame" data-screen="5">
+      <!-- Dark Navy Header Block -->
+      <div class="bg-[#131d38] text-white rounded-b-[28px] pb-4 px-5 pt-3 shadow-md">
+        <div class="flex justify-between items-center text-[11px] font-bold mb-2">
+          <span>9:41</span>
+          <div class="flex items-center gap-1.5 text-[10px]">
+            <i class="fa-solid fa-signal"></i>
+            <i class="fa-solid fa-wifi"></i>
+            <i class="fa-solid fa-battery-full text-xs"></i>
+          </div>
+        </div>
+        <div class="flex items-center justify-between">
+          <button onclick="goToScreen(3)" class="w-7 h-7 flex items-center justify-center text-white/90">
+            <i class="fa-solid fa-arrow-left text-sm"></i>
+          </button>
+          <div class="text-center">
+            <h3 class="text-[15px] font-bold leading-tight">Hasil Analisis</h3>
+            <p class="text-[11px] text-slate-300">3 Obat terdeteksi</p>
+          </div>
+          <button onclick="showToast('Hasil Analisis siap dibagikan (PDF)')" class="w-7 h-7 flex items-center justify-center text-white/90">
+            <i class="fa-solid fa-arrow-up-from-bracket text-xs"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Sub-Navigation Tabs -->
+      <div class="px-4 mt-3">
+        <div class="bg-white/80 rounded-full p-1 flex text-[11.5px] font-bold shadow-sm border border-white">
+          <button class="flex-1 py-1.5 rounded-full bg-blue-600 text-white shadow">Ringkasan</button>
+          <button onclick="goToScreen(8)" class="flex-1 py-1.5 rounded-full text-slate-600 hover:text-blue-600">Interaksi</button>
+          <button onclick="goToScreen(10)" class="flex-1 py-1.5 rounded-full text-slate-600 hover:text-blue-600">Jadwal</button>
+        </div>
+      </div>
+
+      <!-- 3 Detected Medicine Cards -->
+      <div class="px-4 mt-3 space-y-2.5">
+        <!-- Item 1: Amlodipine -->
+        <div onclick="goToScreen(6)" class="glass-card rounded-2xl p-2.5 flex items-center gap-3 cursor-pointer hover:border-blue-300 transition">
+          <svg class="w-12 h-12 shrink-0"><use href="#box-amlodipine"/></svg>
+          <div class="flex-1 min-w-0">
+            <h4 class="text-[12.5px] font-bold text-slate-800 truncate">Amlodipine Besylate 5 mg</h4>
+            <p class="text-[10.5px] text-slate-400">Amlodipine</p>
+            <span class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200/60">
+              <i class="fa-solid fa-circle-check text-[9px]"></i> Aman
+            </span>
+          </div>
+          <i class="fa-solid fa-chevron-right text-[10px] text-slate-400 pr-1"></i>
+        </div>
+
+        <!-- Item 2: Simvastatin -->
+        <div onclick="goToScreen(8)" class="glass-card rounded-2xl p-2.5 flex items-center gap-3 cursor-pointer hover:border-amber-300 transition">
+          <svg class="w-12 h-12 shrink-0"><use href="#box-simvastatin"/></svg>
+          <div class="flex-1 min-w-0">
+            <h4 class="text-[12.5px] font-bold text-slate-800 truncate">Simvastatin 20 mg</h4>
+            <p class="text-[10.5px] text-slate-400">Simvastatin</p>
+            <span class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200/60">
+              <i class="fa-solid fa-circle-check text-[9px]"></i> Perlu Jeda
+            </span>
+          </div>
+          <i class="fa-solid fa-chevron-right text-[10px] text-slate-400 pr-1"></i>
+        </div>
+
+        <!-- Item 3: Omeprazole -->
+        <div onclick="goToScreen(6)" class="glass-card rounded-2xl p-2.5 flex items-center gap-3 cursor-pointer hover:border-blue-300 transition">
+          <svg class="w-12 h-12 shrink-0"><use href="#box-omeprazole"/></svg>
+          <div class="flex-1 min-w-0">
+            <h4 class="text-[12.5px] font-bold text-slate-800 truncate">Omeprazole 20 mg</h4>
+            <p class="text-[10.5px] text-slate-400">Omeprazole</p>
+            <span class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200/60">
+              <i class="fa-solid fa-circle-check text-[9px]"></i> Aman
+            </span>
+          </div>
+          <i class="fa-solid fa-chevron-right text-[10px] text-slate-400 pr-1"></i>
+        </div>
+      </div>
+
+      <!-- Ringkasan Keamanan (4 Counters) -->
+      <div class="px-4 mt-3.5">
+        <h4 class="text-[12.5px] font-extrabold text-slate-800 mb-2">Ringkasan Keamanan</h4>
+        <div class="grid grid-cols-4 gap-2 text-center">
+          <div onclick="goToScreen(7)" class="rounded-xl bg-emerald-50/90 border border-emerald-100 py-2 px-1 cursor-pointer">
+            <div class="text-[18px] font-extrabold text-emerald-600 leading-none">3</div>
+            <div class="text-[9.5px] font-semibold text-emerald-700 mt-1 leading-tight">Obat<br/>Terdeteksi</div>
+          </div>
+          <div onclick="goToScreen(8)" class="rounded-xl bg-amber-50/90 border border-amber-100 py-2 px-1 cursor-pointer">
+            <div class="text-[18px] font-extrabold text-amber-500 leading-none">1</div>
+            <div class="text-[9.5px] font-semibold text-amber-700 mt-1 leading-tight">Perlu<br/>Jeda</div>
+          </div>
+          <div class="rounded-xl bg-rose-50/90 border border-rose-100 py-2 px-1">
+            <div class="text-[18px] font-extrabold text-rose-500 leading-none">0</div>
+            <div class="text-[9.5px] font-semibold text-rose-700 mt-1 leading-tight">Kontra-<br/>indikasi</div>
+          </div>
+          <div onclick="goToScreen(9)" class="rounded-xl bg-blue-50/90 border border-blue-100 py-2 px-1 cursor-pointer">
+            <div class="text-[18px] font-extrabold text-blue-600 leading-none">2</div>
+            <div class="text-[9.5px] font-semibold text-blue-700 mt-1 leading-tight">Pantangan<br/>Makanan</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom CTA -->
+      <div class="px-4 mt-auto pb-4">
+        <button onclick="goToScreen(6)" class="w-full py-3 rounded-full btn-primary-grad font-bold text-[13px] flex items-center justify-center gap-2">
+          <span>Lihat Detail Lengkap</span>
+          <i class="fa-solid fa-arrow-right text-xs"></i>
+        </button>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         SCREEN 6: DETAIL OBAT
+         ===================================================================== -->
+    <section class="phone-frame" data-screen="6">
+      <!-- Dark Navy Header -->
+      <div class="bg-[#131d38] text-white rounded-b-[28px] pb-4 px-5 pt-3 shadow-md">
+        <div class="flex justify-between items-center text-[11px] font-bold mb-2">
+          <span>9:41</span>
+          <div class="flex items-center gap-1.5 text-[10px]">
+            <i class="fa-solid fa-signal"></i>
+            <i class="fa-solid fa-wifi"></i>
+            <i class="fa-solid fa-battery-full text-xs"></i>
+          </div>
+        </div>
+        <div class="flex items-center justify-between">
+          <button onclick="goToScreen(5)" class="w-7 h-7 flex items-center justify-center text-white/90">
+            <i class="fa-solid fa-arrow-left text-sm"></i>
+          </button>
+          <h3 class="text-[15px] font-bold">Detail Obat</h3>
+          <button onclick="this.classList.toggle('text-rose-400'); showToast('Disimpan ke Obat Favorit')" class="w-7 h-7 flex items-center justify-center text-white/90">
+            <i class="fa-regular fa-heart text-sm"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Medicine Highlight Header Card -->
+      <div class="px-4 mt-3">
+        <div class="glass-card rounded-2xl p-3 flex items-center gap-3.5">
+          <svg class="w-14 h-14 shrink-0"><use href="#box-amlodipine"/></svg>
+          <div>
+            <h4 class="text-[13.5px] font-extrabold text-slate-800">Amlodipine Besylate 5 mg</h4>
+            <p class="text-[11px] text-slate-400">Amlodipine</p>
+            <span class="inline-flex items-center gap-1 mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200/70">
+              <i class="fa-solid fa-circle-check text-[9px]"></i> Aman
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4 Sub-tabs -->
+      <div class="px-4 mt-2.5">
+        <div class="bg-white/75 rounded-full p-1 flex text-[10.5px] font-bold border border-white">
+          <button class="flex-1 py-1 rounded-full bg-blue-600 text-white shadow">Informasi</button>
+          <button onclick="goToScreen(8)" class="flex-1 py-1 rounded-full text-slate-500 hover:text-blue-600">Interaksi</button>
+          <button onclick="goToScreen(9)" class="flex-1 py-1 rounded-full text-slate-500 hover:text-blue-600">Pantangan</button>
+          <button onclick="goToScreen(10)" class="flex-1 py-1 rounded-full text-slate-500 hover:text-blue-600">Jadwal</button>
+        </div>
+      </div>
+
+      <!-- 4 Detailed Attribute Cards -->
+      <div class="px-4 mt-2.5 space-y-2">
+        <!-- Fungsi Obat -->
+        <div class="glass-card rounded-xl p-2.5 flex items-start gap-3">
+          <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 mt-0.5">
+            <i class="fa-solid fa-Notes-medical fa-clipboard-check text-xs"></i>
+          </div>
+          <div>
+            <h5 class="text-[11.5px] font-bold text-slate-800">Fungsi Obat</h5>
+            <p class="text-[10.5px] text-slate-500 leading-snug mt-0.5">
+              Menurunkan tekanan darah tinggi dengan melebarkan pembuluh darah.
+            </p>
+          </div>
+        </div>
+
+        <!-- Kandungan Aktif -->
+        <div class="glass-card rounded-xl p-2.5 flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+            <i class="fa-solid fa-atom text-xs"></i>
+          </div>
+          <div>
+            <h5 class="text-[11.5px] font-bold text-slate-800">Kandungan Aktif</h5>
+            <p class="text-[10.5px] text-slate-500">Amlodipine Besylate 5 mg</p>
+          </div>
+        </div>
+
+        <!-- Tanggal Kedaluwarsa -->
+        <div class="glass-card rounded-xl p-2.5 flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+            <i class="fa-regular fa-calendar-check text-xs"></i>
+          </div>
+          <div class="flex-1">
+            <h5 class="text-[11.5px] font-bold text-slate-800">Tanggal Kedaluwarsa</h5>
+            <div class="flex items-center gap-2 mt-0.5">
+              <span class="text-[11.5px] font-extrabold text-slate-800">12 Des 2026</span>
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9.5px] font-bold bg-emerald-50 text-emerald-600">
+                <i class="fa-solid fa-circle-check text-[8px]"></i> Aman
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Aturan Pakai -->
+        <div class="glass-card rounded-xl p-2.5 flex items-start gap-3">
+          <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 mt-0.5">
+            <i class="fa-solid fa-prescription-bottle-medical text-xs"></i>
+          </div>
+          <div>
+            <h5 class="text-[11.5px] font-bold text-slate-800">Aturan Pakai</h5>
+            <p class="text-[10.5px] text-slate-500 leading-snug mt-0.5">
+              1 tablet 1 kali sehari, sebaiknya pada waktu yang sama setiap hari.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Voice CTA -->
+      <div class="px-4 mt-auto pb-4">
+        <button onclick="speakAmlodipineDetail()" class="w-full py-3 rounded-full btn-primary-grad font-bold text-[12.5px] flex items-center justify-center gap-2">
+          <i class="fa-solid fa-volume-high text-xs"></i>
+          <span>Dengarkan Penjelasan</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         SCREEN 7: DAFTAR OBAT TERDETEKSI
+         ===================================================================== -->
+    <section class="phone-frame" data-screen="7">
+      <!-- Status Bar -->
+      <div class="px-6 pt-3 pb-1 flex justify-between items-center text-[11px] font-bold text-slate-800">
+        <span>9:41</span>
+        <div class="flex items-center gap-1.5 text-[10px]">
+          <i class="fa-solid fa-signal"></i>
+          <i class="fa-solid fa-wifi"></i>
+          <i class="fa-solid fa-battery-full text-xs"></i>
+        </div>
+      </div>
+
+      <!-- Header -->
+      <div class="px-5 pt-2 pb-2 flex items-center">
+        <button onclick="goToScreen(2)" class="w-7 h-7 flex items-center justify-center text-slate-700">
+          <i class="fa-solid fa-arrow-left text-sm"></i>
+        </button>
+        <h3 class="flex-1 text-center text-[14.5px] font-extrabold text-[#172554] pr-7">Daftar Obat Terdeteksi</h3>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="px-4 mb-3">
+        <div class="bg-white/90 rounded-full px-3.5 py-2 flex items-center gap-2 border border-slate-200/70 shadow-sm">
+          <i class="fa-solid fa-magnifying-glass text-xs text-slate-400"></i>
+          <input type="text" placeholder="Cari obat..." oninput="filterDrugList(this.value)" class="bg-transparent text-[12px] w-full focus:outline-none text-slate-700 placeholder-slate-400" />
+        </div>
+      </div>
+
+      <!-- 3 Medicine Cards -->
+      <div id="detectedDrugList" class="px-4 space-y-2.5">
+        <div onclick="goToScreen(6)" class="drug-item glass-card rounded-2xl p-3 flex items-center gap-3 cursor-pointer hover:border-blue-300 transition" data-name="amlodipine besylate 5 mg">
+          <svg class="w-12 h-12 shrink-0"><use href="#box-amlodipine"/></svg>
+          <div class="flex-1 min-w-0">
+            <h4 class="text-[12.5px] font-bold text-slate-800">Amlodipine Besylate 5 mg</h4>
+            <p class="text-[10.5px] text-slate-400">Amlodipine</p>
+            <span class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600">
+              <i class="fa-solid fa-circle-check text-[9px]"></i> Aman
+            </span>
+          </div>
+          <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+        </div>
+
+        <div onclick="goToScreen(8)" class="drug-item glass-card rounded-2xl p-3 flex items-center gap-3 cursor-pointer hover:border-amber-300 transition" data-name="simvastatin 20 mg">
+          <svg class="w-12 h-12 shrink-0"><use href="#box-simvastatin"/></svg>
+          <div class="flex-1 min-w-0">
+            <h4 class="text-[12.5px] font-bold text-slate-800">Simvastatin 20 mg</h4>
+            <p class="text-[10.5px] text-slate-400">Simvastatin</p>
+            <span class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600">
+              <i class="fa-solid fa-circle-check text-[9px]"></i> Perlu Jeda
+            </span>
+          </div>
+          <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+        </div>
+
+        <div onclick="goToScreen(6)" class="drug-item glass-card rounded-2xl p-3 flex items-center gap-3 cursor-pointer hover:border-blue-300 transition" data-name="omeprazole 20 mg">
+          <svg class="w-12 h-12 shrink-0"><use href="#box-omeprazole"/></svg>
+          <div class="flex-1 min-w-0">
+            <h4 class="text-[12.5px] font-bold text-slate-800">Omeprazole 20 mg</h4>
+            <p class="text-[10.5px] text-slate-400">Omeprazole</p>
+            <span class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600">
+              <i class="fa-solid fa-circle-check text-[9px]"></i> Aman
+            </span>
+          </div>
+          <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+        </div>
+      </div>
+
+      <!-- Button: + Tambah Obat Manual -->
+      <div class="px-4 mt-3">
+        <button onclick="showToast('Membuka form input obat manual')" class="w-full py-2.5 rounded-xl bg-blue-50/90 hover:bg-blue-100 text-blue-600 font-bold text-[12px] border border-blue-200/60 transition flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-plus text-xs"></i>
+          <span>Tambah Obat Manual</span>
+        </button>
+      </div>
+
+      <!-- Bottom Navigation Bar -->
+      <div class="mt-auto bg-white/95 backdrop-blur-md border-t border-slate-100 px-4 py-2.5 flex justify-between items-center text-[10px] font-semibold text-slate-400">
+        <button onclick="goToScreen(2)" class="flex flex-col items-center gap-1 text-blue-600">
+          <i class="fa-solid fa-house text-sm"></i>
+          <span>Beranda</span>
+        </button>
+        <button onclick="goToScreen(3)" class="flex flex-col items-center gap-1 hover:text-blue-600">
+          <i class="fa-solid fa-expand text-sm"></i>
+          <span>Scan</span>
+        </button>
+        <button onclick="goToScreen(7)" class="flex flex-col items-center gap-1 hover:text-blue-600">
+          <i class="fa-solid fa-briefcase-medical text-sm"></i>
+          <span>Obat Saya</span>
+        </button>
+        <button onclick="goToScreen(9)" class="flex flex-col items-center gap-1 hover:text-blue-600">
+          <i class="fa-solid fa-book-open text-sm"></i>
+          <span>Edukasi</span>
+        </button>
+        <button onclick="goToScreen(11)" class="flex flex-col items-center gap-1 hover:text-blue-600">
+          <i class="fa-regular fa-user text-sm"></i>
+          <span>Profil</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         SCREEN 8: INTERAKSI OBAT
+         ===================================================================== -->
+    <section class="phone-frame" data-screen="8">
+      <!-- Status Bar -->
+      <div class="px-6 pt-3 pb-1 flex justify-between items-center text-[11px] font-bold text-slate-800">
+        <span>9:41</span>
+        <div class="flex items-center gap-1.5 text-[10px]">
+          <i class="fa-solid fa-signal"></i>
+          <i class="fa-solid fa-wifi"></i>
+          <i class="fa-solid fa-battery-full text-xs"></i>
+        </div>
+      </div>
+
+      <!-- Header -->
+      <div class="px-5 pt-2 pb-2 flex items-center">
+        <button onclick="goToScreen(5)" class="w-7 h-7 flex items-center justify-center text-slate-700">
+          <i class="fa-solid fa-arrow-left text-sm"></i>
+        </button>
+        <h3 class="flex-1 text-center text-[14.5px] font-extrabold text-[#172554] pr-7">Interaksi Obat</h3>
+      </div>
+
+      <!-- Filter Pills -->
+      <div class="px-4 flex gap-1.5 mb-3 text-[11px] font-bold">
+        <button class="px-3.5 py-1.5 rounded-full bg-blue-600 text-white shadow-sm">Semua (3)</button>
+        <button class="px-3.5 py-1.5 rounded-full bg-white/80 text-slate-600 border border-white">Aman (1)</button>
+        <button class="px-3.5 py-1.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200/60">Perlu Jeda (1)</button>
+      </div>
+
+      <!-- Main Warning Card: Simvastatin <-> Omeprazole -->
+      <div class="px-4 space-y-3">
+        <div class="rounded-2xl bg-[#fff9f2] border border-amber-200/80 p-3.5 shadow-sm">
+          <div class="flex items-start gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+              <i class="fa-solid fa-triangle-exclamation text-sm"></i>
+            </div>
+            <div>
+              <h4 class="text-[12.5px] font-extrabold text-slate-800 flex items-center gap-1">
+                <span>Simvastatin</span>
+                <i class="fa-solid fa-arrows-left-right text-[10px] text-slate-400"></i>
+                <span>Omeprazole</span>
+              </h4>
+              <span class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100/90 text-amber-700">
+                <i class="fa-solid fa-circle-check text-[9px]"></i> Perlu Jeda Waktu
+              </span>
+            </div>
+          </div>
+
+          <div class="mt-3">
+            <h5 class="text-[11.5px] font-bold text-slate-800">Penjelasan</h5>
+            <p class="text-[11px] text-slate-600 leading-relaxed mt-0.5">
+              Omeprazole dapat memengaruhi penyerapan Simvastatin. Beri jeda waktu minimal 2 jam.
+            </p>
+          </div>
+
+          <!-- Inner Recommendation Box -->
+          <div class="mt-3 bg-white rounded-xl p-2.5 border border-amber-100 flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center shrink-0">
+              <i class="fa-solid fa-prescription-bottle text-xs"></i>
+            </div>
+            <div>
+              <h6 class="text-[11px] font-bold text-slate-800">Rekomendasi</h6>
+              <p class="text-[10.5px] text-slate-600 leading-tight">
+                Minum Simvastatin 2 jam setelah Omeprazole.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Safe Interaction Card: Amlodipine <-> Simvastatin -->
+        <div class="glass-card rounded-2xl p-3.5 border border-emerald-100">
+          <div class="flex items-start gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+              <i class="fa-solid fa-shield-heart text-sm"></i>
+            </div>
+            <div>
+              <h4 class="text-[12.5px] font-extrabold text-slate-800 flex items-center gap-1">
+                <span>Amlodipine</span>
+                <i class="fa-solid fa-arrows-left-right text-[10px] text-slate-400"></i>
+                <span>Simvastatin</span>
+              </h4>
+              <span class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600">
+                <i class="fa-solid fa-circle-check text-[9px]"></i> Aman
+              </span>
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-2.5">
+            Tidak ada interaksi klinis yang signifikan.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         SCREEN 9: PANTANGAN MAKANAN & MINUMAN
+         ===================================================================== -->
+    <section class="phone-frame" data-screen="9">
+      <!-- Status Bar -->
+      <div class="px-6 pt-3 pb-1 flex justify-between items-center text-[11px] font-bold text-slate-800">
+        <span>9:41</span>
+        <div class="flex items-center gap-1.5 text-[10px]">
+          <i class="fa-solid fa-signal"></i>
+          <i class="fa-solid fa-wifi"></i>
+          <i class="fa-solid fa-battery-full text-xs"></i>
+        </div>
+      </div>
+
+      <!-- Header -->
+      <div class="px-4 pt-2 pb-2 flex items-center">
+        <button onclick="goToScreen(5)" class="w-7 h-7 flex items-center justify-center text-slate-700">
+          <i class="fa-solid fa-arrow-left text-sm"></i>
+        </button>
+        <h3 class="flex-1 text-center text-[13.5px] font-extrabold text-[#172554] pr-5">Pantangan Makanan & Minuman</h3>
+      </div>
+
+      <!-- Filter Pills -->
+      <div class="px-4 flex gap-1.5 mb-2.5 text-[11px] font-bold">
+        <button class="px-3.5 py-1 rounded-full bg-blue-600 text-white shadow-sm">Semua</button>
+        <button class="px-3.5 py-1 rounded-full bg-white/80 text-slate-600">Amlodipine</button>
+        <button class="px-3.5 py-1 rounded-full bg-white/80 text-slate-600">Simvastatin</button>
+      </div>
+
+      <!-- 5 Food & Drink Cards -->
+      <div class="px-4 space-y-2 pb-4 overflow-y-auto no-scrollbar">
+        <!-- 1. Jeruk Bali -->
+        <div onclick="showToast('Jeruk Bali menghambat enzim CYP3A4 yang memetabolisme Simvastatin')" class="glass-card rounded-2xl p-2.5 flex items-center gap-3 cursor-pointer hover:border-rose-300 transition">
+          <!-- Grapefruit SVG -->
+          <svg viewBox="0 0 48 48" class="w-11 h-11 shrink-0">
+            <circle cx="24" cy="24" r="20" fill="#fde68a" stroke="#f59e0b" stroke-width="1.5"/>
+            <circle cx="24" cy="24" r="17" fill="#fff1f2"/>
+            <circle cx="24" cy="24" r="15" fill="#f43f5e"/>
+            <line x1="24" y1="9" x2="24" y2="39" stroke="#fff1f2" stroke-width="1.5"/>
+            <line x1="9" y1="24" x2="39" y2="24" stroke="#fff1f2" stroke-width="1.5"/>
+            <line x1="13" y1="13" x2="35" y2="35" stroke="#fff1f2" stroke-width="1.5"/>
+            <line x1="35" y1="13" x2="13" y2="35" stroke="#fff1f2" stroke-width="1.5"/>
+            <circle cx="24" cy="24" r="2.5" fill="#fff1f2"/>
+          </svg>
+          <div class="flex-1 min-w-0">
+            <h4 class="text-[12px] font-extrabold text-rose-600">Jeruk Bali</h4>
+            <p class="text-[10.5px] text-slate-500 leading-tight mt-0.5">
+              Dapat meningkatkan risiko efek samping Simvastatin.
+            </p>
+          </div>
+          <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+        </div>
+
+        <!-- 2. Kopi -->
+        <div onclick="showToast('Kafein dapat memicu asam lambung dan berinteraksi dengan Omeprazole')" class="glass-card rounded-2xl p-2.5 flex items-center gap-3 cursor-pointer hover:border-amber-300 transition">
+          <!-- Coffee Cup SVG -->
+          <svg viewBox="0 0 48 48" class="w-11 h-11 shrink-0">
+            <ellipse cx="23" cy="36" rx="18" ry="6" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1"/>
+            <path d="M34 20 H39 A4 4 0 0 1 43 24 V26 A4 4 0 0 1 39 30 H33" fill="none" stroke="#f8fafc" stroke-width="3"/>
+            <path d="M10 18 H36 L33 33 A10 10 0 0 1 23 38 A10 10 0 0 1 13 33 Z" fill="#ffffff" stroke="#cbd5e1" stroke-width="1"/>
+            <ellipse cx="23" cy="18" rx="13" ry="4.5" fill="#451a03" stroke="#d97706" stroke-width="1.5"/>
+          </svg>
+          <div class="flex-1 min-w-0">
+            <h4 class="text-[12px] font-extrabold text-amber-800">Kopi</h4>
+            <p class="text-[10.5px] text-slate-500 leading-tight mt-0.5">
+              Beri jeda minimal 2 jam dengan Omeprazole.
+            </p>
+          </div>
+          <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+        </div>
+
+        <!-- 3. Susu -->
+        <div onclick="showToast('Kalsium pada susu dapat mengikat zat aktif obat tertentu di lambung')" class="glass-card rounded-2xl p-2.5 flex items-center gap-3 cursor-pointer hover:border-blue-300 transition">
+          <!-- Milk Glass SVG -->
+          <svg viewBox="0 0 48 48" class="w-11 h-11 shrink-0">
+            <ellipse cx="24" cy="41" rx="11" ry="3" fill="rgba(15,23,42,0.1)"/>
+            <polygon points="14,8 34,8 31,40 17,40" fill="#e0f2fe" stroke="#93c5fd" stroke-width="1"/>
+            <polygon points="15,15 33,15 30.5,39 17.5,39" fill="#ffffff"/>
+            <ellipse cx="24" cy="15" rx="9" ry="2.2" fill="#f8fafc"/>
+          </svg>
+          <div class="flex-1 min-w-0">
+            <h4 class="text-[12px] font-extrabold text-amber-700">Susu</h4>
+            <p class="text-[10.5px] text-slate-500 leading-tight mt-0.5">
+              Dapat mengganggu penyerapan beberapa obat.
+            </p>
+          </div>
+          <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+        </div>
+
+        <!-- 4. Teh -->
+        <div onclick="showToast('Tanin dalam teh dapat menghambat penyerapan zat besi dan obat')" class="glass-card rounded-2xl p-2.5 flex items-center gap-3 cursor-pointer hover:border-amber-300 transition">
+          <!-- Tea Cup SVG -->
+          <svg viewBox="0 0 48 48" class="w-11 h-11 shrink-0">
+            <ellipse cx="23" cy="36" rx="16" ry="4.5" fill="#cbd5e1"/>
+            <path d="M11 19 H35 L32 33 A9 9 0 0 1 14 33 Z" fill="#d97706" stroke="#fde68a" stroke-width="1.2"/>
+            <ellipse cx="23" cy="19" rx="12" ry="3.5" fill="#b45309"/>
+            <path d="M18 12 Q24 9 30 14" stroke="#16a34a" stroke-width="3" stroke-linecap="round" fill="none"/>
+          </svg>
+          <div class="flex-1 min-w-0">
+            <h4 class="text-[12px] font-extrabold text-amber-700">Teh</h4>
+            <p class="text-[10.5px] text-slate-500 leading-tight mt-0.5">
+              Hindari konsumsi bersamaan dengan obat tertentu.
+            </p>
+          </div>
+          <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+        </div>
+
+        <!-- 5. Pisang -->
+        <div onclick="showToast('Konsumsi kalium berlebih perlu dipantau pada pengobatan hipertensi')" class="glass-card rounded-2xl p-2.5 flex items-center gap-3 cursor-pointer hover:border-emerald-300 transition">
+          <!-- Banana SVG -->
+          <svg viewBox="0 0 48 48" class="w-11 h-11 shrink-0">
+            <path d="M12 34 C22 38, 36 28, 38 12 C35 10, 33 14, 30 20 C26 27, 18 31, 10 30 Z" fill="#facc15" stroke="#eab308" stroke-width="1.2"/>
+            <path d="M14 36 C25 41, 39 31, 41 15" fill="none" stroke="#ca8a04" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="38" cy="11" r="2" fill="#713f12"/>
+          </svg>
+          <div class="flex-1 min-w-0">
+            <h4 class="text-[12px] font-extrabold text-emerald-700">Pisang</h4>
+            <p class="text-[10.5px] text-slate-500 leading-tight mt-0.5">
+              Dapat memengaruhi kadar kalium pada beberapa obat.
+            </p>
+          </div>
+          <i class="fa-solid fa-chevron-right text-[10px] text-slate-400"></i>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         SCREEN 10: JADWAL KONSUMSI
+         ===================================================================== -->
+    <section class="phone-frame" data-screen="10">
+      <!-- Status Bar -->
+      <div class="px-6 pt-3 pb-1 flex justify-between items-center text-[11px] font-bold text-slate-800">
+        <span>9:41</span>
+        <div class="flex items-center gap-1.5 text-[10px]">
+          <i class="fa-solid fa-signal"></i>
+          <i class="fa-solid fa-wifi"></i>
+          <i class="fa-solid fa-battery-full text-xs"></i>
+        </div>
+      </div>
+
+      <!-- Header -->
+      <div class="px-5 pt-2 pb-2 flex items-center">
+        <button onclick="goToScreen(5)" class="w-7 h-7 flex items-center justify-center text-slate-700">
+          <i class="fa-solid fa-arrow-left text-sm"></i>
+        </button>
+        <h3 class="flex-1 text-center text-[14.5px] font-extrabold text-[#172554] pr-7">Jadwal Konsumsi</h3>
+      </div>
+
+      <!-- Date Selector Bar -->
+      <div class="px-4 mb-3">
+        <div class="flex items-center justify-between bg-white/75 rounded-2xl px-3.5 py-2 border border-white shadow-sm">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+              <i class="fa-solid fa-calendar-day text-xs"></i>
+            </div>
+            <div>
+              <h4 class="text-[12px] font-extrabold text-slate-800 leading-tight">Hari Ini</h4>
+              <p class="text-[10px] text-slate-400">12 Oktober 2026</p>
+            </div>
+          </div>
+          <button onclick="showToast('Pilih tanggal jadwal konsumsi')" class="px-3 py-1 rounded-full bg-blue-50 text-blue-600 font-bold text-[10.5px]">Ubah</button>
+        </div>
+      </div>
+
+      <!-- Timeline List -->
+      <div class="px-4 space-y-2.5 relative">
+        <!-- Vertical connector line -->
+        <div class="absolute left-[58px] top-4 bottom-4 w-[1.5px] bg-blue-200"></div>
+
+        <!-- 07:00 -->
+        <div class="flex items-center gap-2.5 relative z-10">
+          <span class="w-9 text-[11.5px] font-extrabold text-slate-700">07:00</span>
+          <span class="w-2.5 h-2.5 rounded-full bg-blue-600 ring-4 ring-blue-100 shrink-0"></span>
+          <div class="flex-1 glass-card rounded-xl p-2 flex items-center gap-2.5">
+            <svg class="w-9 h-9 shrink-0"><use href="#box-amlodipine"/></svg>
+            <div>
+              <h5 class="text-[11.5px] font-bold text-slate-800">Amlodipine 5 mg</h5>
+              <p class="text-[10px] text-slate-400">Setelah makan</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 10:00 -->
+        <div class="flex items-center gap-2.5 relative z-10">
+          <span class="w-9 text-[11.5px] font-extrabold text-slate-700">10:00</span>
+          <span class="w-2.5 h-2.5 rounded-full bg-blue-600 ring-4 ring-blue-100 shrink-0"></span>
+          <div class="flex-1 glass-card rounded-xl p-2 flex items-center gap-2.5">
+            <svg class="w-9 h-9 shrink-0"><use href="#box-omeprazole"/></svg>
+            <div>
+              <h5 class="text-[11.5px] font-bold text-slate-800">Omeprazole 20 mg</h5>
+              <p class="text-[10px] text-slate-400">Sebelum makan</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 13:00 -->
+        <div class="flex items-center gap-2.5 relative z-10">
+          <span class="w-9 text-[11.5px] font-extrabold text-slate-700">13:00</span>
+          <span class="w-2.5 h-2.5 rounded-full bg-blue-600 ring-4 ring-blue-100 shrink-0"></span>
+          <div class="flex-1 glass-card rounded-xl p-2 flex items-center gap-2.5">
+            <svg class="w-9 h-9 shrink-0"><use href="#box-amlodipine"/></svg>
+            <div>
+              <h5 class="text-[11.5px] font-bold text-slate-800">Amlodipine 5 mg</h5>
+              <p class="text-[10px] text-slate-400">Setelah makan</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 20:00 -->
+        <div class="flex items-center gap-2.5 relative z-10">
+          <span class="w-9 text-[11.5px] font-extrabold text-slate-700">20:00</span>
+          <span class="w-2.5 h-2.5 rounded-full bg-blue-600 ring-4 ring-blue-100 shrink-0"></span>
+          <div class="flex-1 glass-card rounded-xl p-2 flex items-center gap-2.5">
+            <svg class="w-9 h-9 shrink-0"><use href="#box-simvastatin"/></svg>
+            <div>
+              <h5 class="text-[11.5px] font-bold text-slate-800">Simvastatin 20 mg</h5>
+              <p class="text-[10px] text-slate-400">Setelah makan</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chronotherapy AI Info Card -->
+      <div class="px-4 mt-3">
+        <div class="rounded-2xl bg-purple-50/90 border border-purple-200/70 p-3 flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center shrink-0">
+            <i class="fa-solid fa-clock-rotate-left text-xs"></i>
+          </div>
+          <div>
+            <h5 class="text-[11.5px] font-extrabold text-slate-800">Chronotherapy AI</h5>
+            <p class="text-[10px] text-slate-500 leading-snug">
+              Jadwal disesuaikan dengan cara kerja obat dalam tubuh Anda.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Voice CTA -->
+      <div class="px-4 mt-auto pb-4">
+        <button onclick="speakScheduleSummary()" class="w-full py-3 rounded-full btn-primary-grad font-bold text-[12.5px] flex items-center justify-center gap-2">
+          <i class="fa-solid fa-volume-high text-xs"></i>
+          <span>Dengarkan Semua Jadwal</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         SCREEN 11: PROFIL KESEHATAN
+         ===================================================================== -->
+    <section class="phone-frame" data-screen="11">
+      <!-- Status Bar -->
+      <div class="px-6 pt-3 pb-1 flex justify-between items-center text-[11px] font-bold text-slate-800">
+        <span>9:41</span>
+        <div class="flex items-center gap-1.5 text-[10px]">
+          <i class="fa-solid fa-signal"></i>
+          <i class="fa-solid fa-wifi"></i>
+          <i class="fa-solid fa-battery-full text-xs"></i>
+        </div>
+      </div>
+
+      <!-- Header -->
+      <div class="px-5 pt-2 pb-2 flex items-center">
+        <button onclick="goToScreen(2)" class="w-7 h-7 flex items-center justify-center text-slate-700">
+          <i class="fa-solid fa-arrow-left text-sm"></i>
+        </button>
+        <h3 class="flex-1 text-center text-[14.5px] font-extrabold text-[#172554] pr-7">Profil Kesehatan</h3>
+      </div>
+
+      <!-- User Profile Card -->
+      <div class="px-4 mb-3.5">
+        <div class="glass-card rounded-2xl p-3 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center">
+              <i class="fa-solid fa-user text-lg"></i>
+            </div>
+            <div>
+              <h4 class="text-[14px] font-extrabold text-slate-800">Arrafi</h4>
+              <p class="text-[11px] text-slate-400">25 tahun</p>
+            </div>
+          </div>
+          <button onclick="showToast('Edit Profil Kesehatan Arrafi')" class="px-3.5 py-1 rounded-full bg-blue-50 text-blue-600 font-bold text-[11px]">Edit</button>
+        </div>
+      </div>
+
+      <!-- Kondisi Medis -->
+      <div class="px-4 mb-3.5">
+        <h4 class="text-[12px] font-extrabold text-slate-800 mb-2">Kondisi Medis</h4>
+        <div class="flex flex-wrap gap-1.5 text-[11px] font-semibold">
+          <span class="px-3 py-1 rounded-full bg-rose-50 text-rose-500 border border-rose-200/70">Hipertensi</span>
+          <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-600">Diabetes</span>
+          <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-600">Kolesterol</span>
+          <button onclick="showToast('Tambah Kondisi Medis Baru')" class="px-3 py-1 rounded-full bg-blue-50 text-blue-600 font-bold">+ Tambah</button>
+        </div>
+      </div>
+
+      <!-- Alergi Obat -->
+      <div class="px-4 mb-3.5">
+        <h4 class="text-[12px] font-extrabold text-slate-800 mb-2">Alergi Obat</h4>
+        <div class="flex flex-wrap gap-1.5 text-[11px] font-semibold">
+          <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 flex items-center gap-1.5">
+            <i class="fa-solid fa-circle-xmark text-slate-400 text-[10px]"></i> Tidak ada alergi
+          </span>
+          <button onclick="showToast('Tambah Riwayat Alergi Obat')" class="px-3 py-1 rounded-full bg-blue-50 text-blue-600 font-bold">+ Tambah</button>
+        </div>
+      </div>
+
+      <!-- Informasi Tambahan -->
+      <div class="px-4">
+        <h4 class="text-[12px] font-extrabold text-slate-800 mb-2">Informasi Tambahan</h4>
+        <div class="space-y-2">
+          <div class="glass-card rounded-xl px-3 py-2.5 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                <i class="fa-solid fa-person-pregnant text-xs"></i>
+              </div>
+              <span class="text-[11.5px] font-bold text-slate-700">Sedang Hamil</span>
+            </div>
+            <span class="text-[11.5px] font-semibold text-slate-500">Tidak</span>
+          </div>
+
+          <div class="glass-card rounded-xl px-3 py-2.5 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                <i class="fa-solid fa-baby text-xs"></i>
+              </div>
+              <span class="text-[11.5px] font-bold text-slate-700">Sedang Menyusui</span>
+            </div>
+            <span class="text-[11.5px] font-semibold text-slate-500">Tidak</span>
+          </div>
+
+          <div class="glass-card rounded-xl px-3 py-2.5 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-7 h-7 rounded-lg bg-pink-50 text-pink-500 flex items-center justify-center">
+                <i class="fa-solid fa-Angles-up fa-heart-pulse text-xs"></i>
+              </div>
+              <span class="text-[11.5px] font-bold text-slate-700">Riwayat Penyakit</span>
+            </div>
+            <span class="text-[11.5px] font-bold text-slate-700">Maag</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         SCREEN 12: PANDUAN SUARA (AI VOICE ASSISTANT)
+         ===================================================================== -->
+    <section id="voiceScreenFrame" class="phone-frame" data-screen="12">
+      <!-- Floating Decorative Blurred Pills -->
+      <div class="pill-blob w-10 h-5 bg-purple-300/40 rotate-12 top-36 left-4"></div>
+      <div class="pill-blob w-10 h-5 bg-blue-300/40 -rotate-12 top-28 right-6"></div>
+
+      <!-- Status Bar -->
+      <div class="px-6 pt-3 pb-1 flex justify-between items-center text-[11px] font-bold text-slate-800 z-10">
+        <span>9:41</span>
+        <div class="flex items-center gap-1.5 text-[10px]">
+          <i class="fa-solid fa-signal"></i>
+          <i class="fa-solid fa-wifi"></i>
+          <i class="fa-solid fa-battery-full text-xs"></i>
+        </div>
+      </div>
+
+      <!-- Header -->
+      <div class="px-5 pt-2 pb-2 flex items-center z-10">
+        <button onclick="goToScreen(6)" class="w-7 h-7 flex items-center justify-center text-slate-700">
+          <i class="fa-solid fa-arrow-left text-sm"></i>
+        </button>
+        <h3 class="flex-1 text-center text-[14.5px] font-extrabold text-[#172554] pr-7">Panduan Suara</h3>
+      </div>
+
+      <!-- Cute 3D AI Robot Avatar with Headphones -->
+      <div class="flex-1 flex flex-col items-center px-6 pt-4 pb-5 z-10 text-center">
+        <div class="relative mb-4">
+          <!-- Outer Purple/Blue Glow -->
+          <div class="absolute -inset-3 rounded-full bg-gradient-to-tr from-blue-500/35 via-indigo-400/30 to-purple-500/40 blur-xl"></div>
+          <!-- 3D Robot SVG -->
+          <svg viewBox="0 0 140 130" class="w-36 h-32 relative drop-shadow-lg">
+            <defs>
+              <linearGradient id="headPhoneBand" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#60a5fa"/>
+                <stop offset="50%" stop-color="#818cf8"/>
+                <stop offset="100%" stop-color="#a855f7"/>
+              </linearGradient>
+              <linearGradient id="robotBody" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#ffffff"/>
+                <stop offset="100%" stop-color="#dbeafe"/>
+              </linearGradient>
+              <linearGradient id="visorScreen" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#0f172a"/>
+                <stop offset="100%" stop-color="#1e1b4b"/>
+              </linearGradient>
+            </defs>
+
+            <!-- Headphone Arch -->
+            <path d="M22 68 A48 48 0 0 1 118 68" fill="none" stroke="url(#headPhoneBand)" stroke-width="8" stroke-linecap="round"/>
+            <!-- Left & Right Ear Cups -->
+            <rect x="12" y="54" width="14" height="30" rx="7" fill="url(#headPhoneBand)"/>
+            <rect x="114" y="54" width="14" height="30" rx="7" fill="url(#headPhoneBand)"/>
+            <!-- Robot Head Shell -->
+            <rect x="24" y="34" width="92" height="68" rx="32" fill="url(#robotBody)" stroke="#eff6ff" stroke-width="2"/>
+            <!-- Forehead Sensor Dot -->
+            <circle cx="70" cy="43" r="2.5" fill="#60a5fa"/>
+            <!-- Dark Visor Face -->
+            <rect x="33" y="49" width="74" height="40" rx="18" fill="url(#visorScreen)" stroke="#38bdf8" stroke-width="1.2"/>
+            <!-- Happy Glowing Eyes (^ ^) -->
+            <path d="M47 68 Q54 59 61 68" fill="none" stroke="#38bdf8" stroke-width="3.5" stroke-linecap="round"/>
+            <path d="M79 68 Q86 59 93 68" fill="none" stroke="#38bdf8" stroke-width="3.5" stroke-linecap="round"/>
+            <!-- Cute Smile -->
+            <path d="M65 76 Q70 80 75 76" fill="none" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round"/>
+            <!-- Microphone Boom -->
+            <path d="M116 78 Q105 96 86 96" fill="none" stroke="#60a5fa" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="84" cy="96" r="4" fill="#38bdf8"/>
+          </svg>
+        </div>
+
+        <h4 class="text-[19px] font-extrabold text-[#172554] leading-snug">
+          Halo!<br/>Saya MediLens AI
+        </h4>
+        <p class="text-[11.5px] text-slate-600 mt-1.5 leading-relaxed max-w-[230px]">
+          Saya akan membacakan ringkasan informasi obat ini untuk Anda.
+        </p>
+
+        <!-- Audio Waveform Visualizer Card -->
+        <div class="w-full glass-card rounded-2xl py-4 px-5 mt-5 flex items-center justify-center gap-[4px] h-16">
+          <div class="wave-bar w-1 h-3 rounded-full bg-blue-300" style="animation-delay: 0.1s"></div>
+          <div class="wave-bar w-1 h-5 rounded-full bg-blue-400" style="animation-delay: 0.2s"></div>
+          <div class="wave-bar w-1 h-8 rounded-full bg-blue-500" style="animation-delay: 0.3s"></div>
+          <div class="wave-bar w-1 h-4 rounded-full bg-blue-400" style="animation-delay: 0.15s"></div>
+          <div class="wave-bar w-1 h-9 rounded-full bg-indigo-500" style="animation-delay: 0.25s"></div>
+          <div class="wave-bar w-1 h-6 rounded-full bg-indigo-500" style="animation-delay: 0.4s"></div>
+          <div class="wave-bar w-1 h-10 rounded-full bg-blue-600" style="animation-delay: 0.1s"></div>
+          <div class="wave-bar w-1 h-7 rounded-full bg-indigo-600" style="animation-delay: 0.35s"></div>
+          <div class="wave-bar w-1 h-11 rounded-full bg-purple-600" style="animation-delay: 0.2s"></div>
+          <div class="wave-bar w-1 h-5 rounded-full bg-indigo-500" style="animation-delay: 0.45s"></div>
+          <div class="wave-bar w-1 h-9 rounded-full bg-purple-500" style="animation-delay: 0.15s"></div>
+          <div class="wave-bar w-1 h-11 rounded-full bg-indigo-600" style="animation-delay: 0.3s"></div>
+          <div class="wave-bar w-1 h-6 rounded-full bg-blue-500" style="animation-delay: 0.25s"></div>
+          <div class="wave-bar w-1 h-9 rounded-full bg-indigo-500" style="animation-delay: 0.1s"></div>
+          <div class="wave-bar w-1 h-7 rounded-full bg-purple-500" style="animation-delay: 0.35s"></div>
+          <div class="wave-bar w-1 h-10 rounded-full bg-blue-600" style="animation-delay: 0.2s"></div>
+          <div class="wave-bar w-1 h-5 rounded-full bg-blue-400" style="animation-delay: 0.4s"></div>
+          <div class="wave-bar w-1 h-8 rounded-full bg-indigo-500" style="animation-delay: 0.15s"></div>
+          <div class="wave-bar w-1 h-4 rounded-full bg-blue-400" style="animation-delay: 0.3s"></div>
+          <div class="wave-bar w-1 h-3 rounded-full bg-blue-300" style="animation-delay: 0.2s"></div>
+        </div>
+
+        <!-- Play / Pause Circular Button -->
+        <div class="mt-6">
+          <button id="voicePlayBtn" onclick="toggleVoiceAssistant()" class="w-16 h-16 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-500 to-purple-500 text-white shadow-xl shadow-blue-500/40 flex items-center justify-center hover:scale-105 transition">
+            <i id="voicePlayIcon" class="fa-solid fa-play text-xl ml-1"></i>
+          </button>
+        </div>
+
+        <!-- Playback Speed Selector Pills -->
+        <div class="mt-auto pt-4 flex items-center justify-center gap-3 text-[11.5px] font-bold">
+          <button onclick="setSpeechSpeed(0.75, this)" class="speed-pill px-3.5 py-1 rounded-full text-slate-500 hover:text-slate-800">0.75x</button>
+          <button onclick="setSpeechSpeed(1.0, this)" class="speed-pill px-4 py-1 rounded-full bg-blue-600 text-white shadow-md">1x</button>
+          <button onclick="setSpeechSpeed(1.25, this)" class="speed-pill px-3.5 py-1 rounded-full text-slate-500 hover:text-slate-800">1.25x</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- TOAST NOTIFICATION POPUP -->
+  <div id="toastBox" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none opacity-0 transition-all duration-300 transform translate-y-2">
+    <div class="bg-slate-900/95 backdrop-blur-md text-white px-4 py-2.5 rounded-2xl shadow-xl border border-slate-700 flex items-center gap-2.5 text-xs font-semibold">
+      <i class="fa-solid fa-circle-info text-cyan-400"></i>
+      <span id="toastText">Notifikasi</span>
+    </div>
+  </div>
+
+  <!-- INTERACTIVE JAVASCRIPT & INDONESIAN VOICE ASSISTANT -->
+  <script>
+    let currentMode = 'grid'; // 'grid' or 'single'
+    let activeScreen = 1;
+    let currentSpeechRate = 1.0;
+    let isSpeaking = false;
+
+    // Switch between 12-Screens Grid and Single Interactive Phone Mode
+    function setViewMode(mode) {
+      currentMode = mode;
+      const container = document.getElementById('screensContainer');
+      const btnGrid = document.getElementById('btnModeGrid');
+      const btnSingle = document.getElementById('btnModeSingle');
+      const singleNav = document.getElementById('singleModeNav');
+      const btnZoom = document.getElementById('btnZoomToggle');
+      const allFrames = document.querySelectorAll('.phone-frame');
+
+      if (mode === 'single') {
+        container.classList.remove('showcase-grid', 'auto-fit');
+        container.classList.add('flex', 'justify-center', 'py-8', 'px-4');
+        singleNav.classList.remove('hidden');
+        btnZoom.classList.add('hidden');
+
+        btnSingle.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-blue-600 shadow-sm flex items-center gap-1.5';
+        btnGrid.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-slate-900 flex items-center gap-1.5';
+
+        updateSingleScreenVisibility();
+      } else {
+        container.classList.add('showcase-grid', 'auto-fit');
+        container.classList.remove('flex', 'justify-center', 'py-8', 'px-4');
+        singleNav.classList.add('hidden');
+        btnZoom.classList.remove('hidden');
+
+        btnGrid.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-white text-blue-600 shadow-sm flex items-center gap-1.5';
+        btnSingle.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-slate-900 flex items-center gap-1.5';
+
+        allFrames.forEach(frame => frame.classList.remove('hidden'));
+      }
+    }
+
+    // Navigate to a specific screen (1 - 12)
+    function goToScreen(screenNum) {
+      activeScreen = screenNum;
+      if (currentMode === 'single') {
+        updateSingleScreenVisibility();
+      } else {
+        // In Grid mode, highlight and scroll smoothly to that screen
+        const target = document.querySelector(`.phone-frame[data-screen="${screenNum}"]`);
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+          target.classList.add('ring-4', 'ring-blue-500');
+          setTimeout(() => target.classList.remove('ring-4', 'ring-blue-500'), 1400);
+        }
+      }
+    }
+
+    function updateSingleScreenVisibility() {
+      const allFrames = document.querySelectorAll('.phone-frame');
+      allFrames.forEach(frame => {
+        const num = parseInt(frame.getAttribute('data-screen'), 10);
+        if (num === activeScreen) {
+          frame.classList.remove('hidden');
+        } else {
+          frame.classList.add('hidden');
+        }
+      });
+
+      const pills = document.querySelectorAll('.screen-pill');
+      pills.forEach(pill => {
+        const bNum = parseInt(pill.getAttribute('data-screen-btn'), 10);
+        if (bNum === activeScreen) {
+          pill.className = 'screen-pill px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-600 text-white shadow-sm';
+        } else {
+          pill.className = 'screen-pill px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 hover:bg-blue-50';
+        }
+      });
+    }
+
+    // Simulate Camera Capture (Screen 3 -> Screen 4 -> Screen 5)
+    function triggerCameraCapture() {
+      showToast('Memotret 3 kemasan obat... Menganalisis dengan AI');
+      goToScreen(4);
+      if (currentMode === 'single') {
+        setTimeout(() => {
+          if (activeScreen === 4) goToScreen(5);
+        }, 2200);
+      }
+    }
+
+    // Filter Detected Drugs on Screen 7
+    function filterDrugList(query) {
+      const q = query.toLowerCase().trim();
+      const items = document.querySelectorAll('#detectedDrugList .drug-item');
+      items.forEach(item => {
+        const name = item.getAttribute('data-name');
+        item.style.display = name.includes(q) ? 'flex' : 'none';
+      });
+    }
+
+    // Toggle Grid Scale (Fit to screen vs 100% full size)
+    function toggleGridZoom() {
+      const container = document.getElementById('screensContainer');
+      const label = document.getElementById('zoomLabel');
+      const icon = document.getElementById('zoomIcon');
+      container.classList.toggle('auto-fit');
+      if (container.classList.contains('auto-fit')) {
+        label.textContent = 'Ukuran 100%';
+        icon.className = 'fa-solid fa-magnifying-glass-plus';
+      } else {
+        label.textContent = 'Pas di Layar';
+        icon.className = 'fa-solid fa-magnifying-glass-minus';
+      }
+    }
+
+    // Set Speech Playback Speed on Screen 12
+    function setSpeechSpeed(rate, btnEl) {
+      currentSpeechRate = rate;
+      document.querySelectorAll('.speed-pill').forEach(btn => {
+        btn.className = 'speed-pill px-3.5 py-1 rounded-full text-slate-500 hover:text-slate-800';
+      });
+      btnEl.className = 'speed-pill px-4 py-1 rounded-full bg-blue-600 text-white shadow-md';
+      showToast(`Kecepatan suara diatur ke ${rate}x`);
+      if (isSpeaking) {
+        speakIndonesianSummary();
+      }
+    }
+
+    // Web Speech API: Speak Indonesian Medication Guidance
+    function speakText(text) {
+      if (!('speechSynthesis' in window)) {
+        showToast('Browser Anda tidak mendukung fitur Text-to-Speech');
+        return;
+      }
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'id-ID';
+      utterance.rate = currentSpeechRate;
+      utterance.pitch = 1.02;
+
+      const voiceFrame = document.getElementById('voiceScreenFrame');
+      const playIcon = document.getElementById('voicePlayIcon');
+
+      utterance.onstart = () => {
+        isSpeaking = true;
+        voiceFrame.classList.add('playing-audio');
+        if (playIcon) playIcon.className = 'fa-solid fa-pause text-xl';
+      };
+
+      utterance.onend = () => {
+        isSpeaking = false;
+        voiceFrame.classList.remove('playing-audio');
+        if (playIcon) playIcon.className = 'fa-solid fa-play text-xl ml-1';
+      };
+
+      utterance.onerror = () => {
+        isSpeaking = false;
+        voiceFrame.classList.remove('playing-audio');
+        if (playIcon) playIcon.className = 'fa-solid fa-play text-xl ml-1';
+      };
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function toggleVoiceAssistant() {
+      if (isSpeaking) {
+        window.speechSynthesis.cancel();
+        isSpeaking = false;
+        document.getElementById('voiceScreenFrame').classList.remove('playing-audio');
+        document.getElementById('voicePlayIcon').className = 'fa-solid fa-play text-xl ml-1';
+        showToast('Panduan suara dijeda');
+      } else {
+        speakIndonesianSummary();
+      }
+    }
+
+    function speakIndonesianSummary() {
+      showToast('MediLens AI membacakan panduan obat...');
+      speakText(
+        'Halo Arrafi! Saya MediLens AI. Berdasarkan hasil pindai tiga obat Anda: Pertama, Amlodipine 5 miligram untuk menurunkan tekanan darah tinggi, status aman, diminum pagi hari sesudah makan. Kedua, Omeprazole 20 miligram untuk lambung, diminum sebelum makan. Ketiga, Simvastatin 20 miligram untuk kolesterol. Perhatian: Beri jeda waktu minimal 2 jam antara Omeprazole dan Simvastatin, serta hindari konsumsi bersama jeruk bali, kopi, atau susu.'
+      );
+    }
+
+    function speakAmlodipineDetail() {
+      showToast('Membacakan detail Amlodipine 5 mg...');
+      speakText(
+        'Detail Obat Amlodipine Besylate 5 miligram. Fungsi obat: Menurunkan tekanan darah tinggi dengan melebarkan pembuluh darah. Tanggal kedaluwarsa: 12 Desember 2026, status aman. Aturan pakai: 1 tablet 1 kali sehari, sebaiknya pada waktu yang sama setiap hari.'
+      );
+    }
+
+    function speakScheduleSummary() {
+      showToast('Membacakan jadwal konsumsi obat hari ini...');
+      speakText(
+        'Jadwal konsumsi obat Anda hari ini: Pukul 7 pagi, Amlodipine 5 miligram setelah makan. Pukul 10 pagi, Omeprazole 20 miligram sebelum makan. Pukul 1 siang, Amlodipine 5 miligram. Dan pukul 8 malam, Simvastatin 20 miligram setelah makan.'
+      );
+    }
+
+    // Toast Helper
+    let toastTimer = null;
+    function showToast(msg) {
+      const box = document.getElementById('toastBox');
+      const txt = document.getElementById('toastText');
+      txt.textContent = msg;
+      box.classList.remove('opacity-0', 'translate-y-2');
+      box.classList.add('opacity-100', 'translate-y-0');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        box.classList.add('opacity-0', 'translate-y-2');
+        box.classList.remove('opacity-100', 'translate-y-0');
+      }, 2800);
+    }
+  </script>
+</body>
+</html>
