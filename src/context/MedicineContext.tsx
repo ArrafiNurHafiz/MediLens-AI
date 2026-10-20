@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { Medicine, INITIAL_MEDICINES } from "@/data/initialMedicines";
 import { DrugInteraction, DRUG_INTERACTIONS } from "@/data/interactionsData";
 import { FoodRestriction, FOOD_RESTRICTIONS } from "@/data/restrictionsData";
@@ -211,16 +211,16 @@ export function MedicineProvider({ children }: { children: React.ReactNode }) {
     }
   }, [medicines, schedule, profile, scanHistory, isLoaded]);
 
-  const showToast = (message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') => {
+  const showToast = useCallback((message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') => {
     setToastInfo({ message, type, visible: true });
     setTimeout(() => {
       setToastInfo(prev => ({ ...prev, visible: false }));
     }, 3200);
-  };
+  }, []);
 
-  const hideToast = () => {
+  const hideToast = useCallback(() => {
     setToastInfo(prev => ({ ...prev, visible: false }));
-  };
+  }, []);
 
   const addMedicine = (medicine: Medicine) => {
     setMedicines(prev => {

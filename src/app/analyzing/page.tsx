@@ -24,26 +24,23 @@ export default function AnalyzingPage() {
     { id: 6, title: "Menyiapkan panduan suara", desc: "Sintesis audio ramah lansia siap diputar" },
   ];
 
-  const [activeStepIndex, setActiveStepIndex] = useState(0);
-  const [completedSteps, setCompletedSteps] = useState<number[]>([]);
+  const [completedCount, setCompletedCount] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setActiveStepIndex((prev) => {
+      setCompletedCount((prev) => {
         if (prev < steps.length) {
-          setCompletedSteps((c) => [...c, prev]);
           return prev + 1;
-        } else {
-          clearInterval(timer);
-          return prev;
         }
+        clearInterval(timer);
+        return prev;
       });
     }, 450);
 
     return () => clearInterval(timer);
   }, [steps.length]);
 
-  const isAllDone = completedSteps.length >= steps.length;
+  const isAllDone = completedCount >= steps.length;
 
   useEffect(() => {
     if (isAllDone) {
@@ -85,13 +82,13 @@ export default function AnalyzingPage() {
           <p className="text-xs text-slate-500">
             {isAllDone
               ? "Semua data obat telah dipetakan"
-              : `Langkah ${Math.min(activeStepIndex + 1, steps.length)} dari ${steps.length}`}
+              : `Langkah ${Math.min(completedCount + 1, steps.length)} dari ${steps.length}`}
           </p>
           {/* Progress Bar */}
           <div className="w-48 h-1.5 bg-slate-200 rounded-full mt-2 overflow-hidden mx-auto">
             <div
               className="h-full bg-gradient-to-r from-blue-600 to-indigo-600 transition-all duration-300"
-              style={{ width: `${(completedSteps.length / steps.length) * 100}%` }}
+              style={{ width: `${(completedCount / steps.length) * 100}%` }}
             />
           </div>
         </div>
@@ -99,8 +96,8 @@ export default function AnalyzingPage() {
         {/* 6 Step Checklist */}
         <div className="w-full space-y-3 px-1">
           {steps.map((step, idx) => {
-            const isCompleted = completedSteps.includes(idx);
-            const isCurrent = activeStepIndex === idx && !isCompleted;
+            const isCompleted = idx < completedCount;
+            const isCurrent = idx === completedCount;
 
             return (
               <div
