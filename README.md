@@ -7,12 +7,13 @@
 **Solusi Cerdas Pengenalan Obat, Analisis Kontraindikasi Alergi, dan Navigasi Suara Ramah Disabilitas Netra & Lansia**
 
 [![Vercel Deployment](https://img.shields.io/badge/Vercel-Deployment%20Active-black?style=for-the-badge&logo=vercel)](https://medilens-ai-six.vercel.app)
-[![Android APK](https://img.shields.io/badge/Android-APK%20v1.0.0-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://medilens-ai-six.vercel.app/MediLensAI.apk)
+[![Android APK](https://img.shields.io/badge/Android-APK%20v1.1.0-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/ArrafiNurHafiz/MediLens-AI/releases/download/v1.1.0/MediLensAI.apk)
+[![GitHub Release](https://img.shields.io/github/v/release/ArrafiNurHafiz/MediLens-AI?style=for-the-badge&color=blue&logo=github)](https://github.com/ArrafiNurHafiz/MediLens-AI/releases/latest)
 [![WCAG Level](https://img.shields.io/badge/Accessibility-WCAG%202.1%20AAA-FFB800?style=for-the-badge)](https://medilens-ai-six.vercel.app/beranda)
 [![Built with Bun](https://img.shields.io/badge/Runtime-Bun%201.4-FBF0DF?style=for-the-badge&logo=bun&logoColor=black)](https://bun.sh)
 [![TanStack Start](https://img.shields.io/badge/Framework-TanStack%20Start-000000?style=for-the-badge&logo=react)](https://tanstack.com/start)
 
-[Live Web Demo](https://medilens-ai-six.vercel.app) • [Download Android APK](https://medilens-ai-six.vercel.app/MediLensAI.apk) • [Dokumentasi API](#-arsitektur-dan-alur-sistem) • [Panduan Aksesibilitas](#-standar-aksesibilitas-disabilitas-wcag-aaa)
+[Live Web Demo](https://medilens-ai-six.vercel.app) • [Download Android APK (GitHub Release)](https://github.com/ArrafiNurHafiz/MediLens-AI/releases/download/v1.1.0/MediLensAI.apk) • [Dokumentasi API](#-arsitektur-dan-alur-sistem) • [Panduan Aksesibilitas](#-standar-aksesibilitas-disabilitas-wcag-aaa)
 
 </div>
 

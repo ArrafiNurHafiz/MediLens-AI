@@ -63,7 +63,7 @@ function Splash() {
         </Link>
 
         <a
-          href="/MediLensAI.apk"
+          href="https://github.com/ArrafiNurHafiz/MediLens-AI/releases/download/v1.1.0/MediLensAI.apk"
           download="MediLensAI.apk"
           className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600/20 border border-emerald-500/30 py-3.5 text-xs font-bold text-emerald-300 hover:bg-emerald-600/30 active:scale-95 transition-all"
         >
