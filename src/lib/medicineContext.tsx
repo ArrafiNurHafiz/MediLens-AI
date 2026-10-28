@@ -1,5 +1,30 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 
+export interface DoctorPrescriptionItem {
+  id: string;
+  medicineName: string;
+  dosage: string;
+  frequency: string; // e.g. "2x sehari", "3x sehari"
+  timing: "before_meal" | "after_meal" | "with_meal";
+  timingLabel: string; // e.g. "Setelah Makan", "Sebelum Makan"
+  duration?: string; // e.g. "3 hari", "5 hari"
+  instructions: string; // e.g. "Diminum 2 kali sehari setelah makan pagi dan malam"
+  doctorNotes?: string; // e.g. "Jika pusing mereda obat bisa dihentikan"
+  spokeSummary: string; // audio guidance for blind patients: "Ini [Nama Obat], diminum..."
+}
+
+export interface DoctorConsultation {
+  id: string;
+  timestamp: string;
+  doctorName?: string;
+  clinicOrHospital?: string;
+  rawTranscript: string;
+  summary: string;
+  prescriptions: DoctorPrescriptionItem[];
+  precautions?: string[];
+  audioGuideText: string;
+}
+
 export interface FoodRestrictionItem {
   food: string;
   warning: string;
@@ -98,6 +123,8 @@ interface MedicineContextType {
   schedule: ScheduleItem[];
   profile: UserProfile;
   scanHistory: ScanRecord[];
+  consultations: DoctorConsultation[];
+  activeConsultation: DoctorConsultation | null;
   toastInfo: ToastInfo;
   showToast: (message: string, type?: "info" | "success" | "warning" | "error") => void;
   hideToast: () => void;
@@ -108,6 +135,9 @@ interface MedicineContextType {
   updateProfile: (updates: Partial<UserProfile>) => void;
   updateAccessibility: (settings: Partial<AccessibilitySettings>) => void;
   addScanRecord: (record: ScanRecord) => void;
+  addConsultation: (consultation: DoctorConsultation) => void;
+  deleteConsultation: (id: string) => void;
+  findConsultationMatchForMedicine: (medicineName: string) => DoctorPrescriptionItem | null;
   clearAllData: () => void;
   playFeedback: (type?: "click" | "success" | "warning" | "alert") => void;
 }
@@ -219,6 +249,7 @@ export function MedicineProvider({ children }: { children: React.ReactNode }) {
   const [schedule, setSchedule] = useState<ScheduleItem[]>(DEFAULT_SCHEDULE);
   const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
   const [scanHistory, setScanHistory] = useState<ScanRecord[]>([]);
+  const [consultations, setConsultations] = useState<DoctorConsultation[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
   const [toastInfo, setToastInfo] = useState<ToastInfo>({
@@ -264,6 +295,10 @@ export function MedicineProvider({ children }: { children: React.ReactNode }) {
       const savedHistory = localStorage.getItem("medilens_fresh_v2_history");
       if (savedHistory) setScanHistory(JSON.parse(savedHistory));
       else setScanHistory([]);
+
+      const savedConsultations = localStorage.getItem("medilens_fresh_v2_consultations");
+      if (savedConsultations) setConsultations(JSON.parse(savedConsultations));
+      else setConsultations([]);
     } catch (e) {
       console.warn("Storage load warning:", e);
     } finally {
@@ -279,6 +314,7 @@ export function MedicineProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("medilens_fresh_v2_schedule", JSON.stringify(schedule));
       localStorage.setItem("medilens_fresh_v2_profile", JSON.stringify(profile));
       localStorage.setItem("medilens_fresh_v2_history", JSON.stringify(scanHistory));
+      localStorage.setItem("medilens_fresh_v2_consultations", JSON.stringify(consultations));
     } catch (e) {
       console.warn("Storage save warning:", e);
     }
@@ -402,20 +438,61 @@ export function MedicineProvider({ children }: { children: React.ReactNode }) {
     setScanHistory((prev) => [record, ...prev]);
   }, []);
 
+  const addConsultation = useCallback(
+    (consultation: DoctorConsultation) => {
+      setConsultations((prev) => [consultation, ...prev]);
+      showToast("Catatan konsultasi dokter berhasil disimpan!", "success");
+    },
+    [showToast]
+  );
+
+  const deleteConsultation = useCallback(
+    (id: string) => {
+      setConsultations((prev) => prev.filter((c) => c.id !== id));
+      showToast("Catatan konsultasi dihapus", "info");
+    },
+    [showToast]
+  );
+
+  const findConsultationMatchForMedicine = useCallback(
+    (medicineName: string): DoctorPrescriptionItem | null => {
+      if (!medicineName) return null;
+      const cleanTarget = medicineName.toLowerCase().replace(/[^a-z0-9]/g, "");
+      for (const consult of consultations) {
+        for (const item of consult.prescriptions) {
+          const cleanItem = item.medicineName.toLowerCase().replace(/[^a-z0-9]/g, "");
+          if (
+            cleanTarget.includes(cleanItem) ||
+            cleanItem.includes(cleanTarget) ||
+            (cleanTarget.length >= 4 && cleanItem.length >= 4 && (cleanTarget.slice(0, 5) === cleanItem.slice(0, 5)))
+          ) {
+            return item;
+          }
+        }
+      }
+      return null;
+    },
+    [consultations]
+  );
+
   const clearAllData = useCallback(() => {
     setMedicines([]);
     setSchedule([]);
     setScanHistory([]);
+    setConsultations([]);
     try {
       localStorage.removeItem("medilens_fresh_v2_medicines");
       localStorage.removeItem("medilens_fresh_v2_schedule");
       localStorage.removeItem("medilens_fresh_v2_history");
+      localStorage.removeItem("medilens_fresh_v2_consultations");
       localStorage.removeItem("medilens_real_medicines");
       localStorage.removeItem("medilens_real_schedule");
       localStorage.removeItem("medilens_real_history");
     } catch (e) {}
     showToast("Data lemari obat telah dikosongkan.", "info");
   }, [showToast]);
+
+  const activeConsultation = consultations.length > 0 ? (consultations[0] ?? null) : null;
 
   return (
     <MedicineContext.Provider
@@ -434,6 +511,11 @@ export function MedicineProvider({ children }: { children: React.ReactNode }) {
         updateProfile,
         updateAccessibility,
         addScanRecord,
+        addConsultation,
+        deleteConsultation,
+        findConsultationMatchForMedicine,
+        consultations,
+        activeConsultation,
         clearAllData,
         playFeedback,
       }}
