@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApotekRouteImport } from './routes/apotek'
 import { Route as BerandaRouteImport } from './routes/beranda'
 import { Route as JadwalRouteImport } from './routes/jadwal'
+import { Route as KonsultasiRouteImport } from './routes/konsultasi'
 import { Route as ObatRouteImport } from './routes/obat'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ScanRouteImport } from './routes/scan'
@@ -36,6 +37,11 @@ const BerandaRoute = BerandaRouteImport.update({
 const JadwalRoute = JadwalRouteImport.update({
   id: '/jadwal',
   path: '/jadwal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KonsultasiRoute = KonsultasiRouteImport.update({
+  id: '/konsultasi',
+  path: '/konsultasi',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ObatRoute = ObatRouteImport.update({
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/apotek': typeof ApotekRoute
   '/beranda': typeof BerandaRoute
   '/jadwal': typeof JadwalRoute
+  '/konsultasi': typeof KonsultasiRoute
   '/obat': typeof ObatRoute
   '/profile': typeof ProfileRoute
   '/scan': typeof ScanRoute
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/apotek': typeof ApotekRoute
   '/beranda': typeof BerandaRoute
   '/jadwal': typeof JadwalRoute
+  '/konsultasi': typeof KonsultasiRoute
   '/obat': typeof ObatRoute
   '/profile': typeof ProfileRoute
   '/scan': typeof ScanRoute
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/apotek': typeof ApotekRoute
   '/beranda': typeof BerandaRoute
   '/jadwal': typeof JadwalRoute
+  '/konsultasi': typeof KonsultasiRoute
   '/obat': typeof ObatRoute
   '/profile': typeof ProfileRoute
   '/scan': typeof ScanRoute
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/apotek'
     | '/beranda'
     | '/jadwal'
+    | '/konsultasi'
     | '/obat'
     | '/profile'
     | '/scan'
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/apotek'
     | '/beranda'
     | '/jadwal'
+    | '/konsultasi'
     | '/obat'
     | '/profile'
     | '/scan'
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/apotek'
     | '/beranda'
     | '/jadwal'
+    | '/konsultasi'
     | '/obat'
     | '/profile'
     | '/scan'
@@ -128,6 +140,7 @@ export interface RootRouteChildren {
   ApotekRoute: typeof ApotekRoute
   BerandaRoute: typeof BerandaRoute
   JadwalRoute: typeof JadwalRoute
+  KonsultasiRoute: typeof KonsultasiRoute
   ObatRoute: typeof ObatRoute
   ProfileRoute: typeof ProfileRoute
   ScanRoute: typeof ScanRoute
@@ -162,6 +175,13 @@ declare module '@tanstack/react-router' {
       path: '/jadwal'
       fullPath: '/jadwal'
       preLoaderRoute: typeof JadwalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/konsultasi': {
+      id: '/konsultasi'
+      path: '/konsultasi'
+      fullPath: '/konsultasi'
+      preLoaderRoute: typeof KonsultasiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/obat': {
@@ -200,6 +220,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApotekRoute: ApotekRoute,
   BerandaRoute: BerandaRoute,
   JadwalRoute: JadwalRoute,
+  KonsultasiRoute: KonsultasiRoute,
   ObatRoute: ObatRoute,
   ProfileRoute: ProfileRoute,
   ScanRoute: ScanRoute,

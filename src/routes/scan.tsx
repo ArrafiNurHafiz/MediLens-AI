@@ -14,9 +14,11 @@ import {
   Sparkles,
   Info,
   Pill,
+  Stethoscope,
+  CheckCircle2,
 } from "lucide-react";
 import { Phone, speak, stopSpeech } from "@/components/medi";
-import { useMedicine, type Medicine } from "@/lib/medicineContext";
+import { useMedicine, type Medicine, type DoctorPrescriptionItem } from "@/lib/medicineContext";
 
 export const Route = createFileRoute("/scan")({
   head: () => ({
@@ -30,7 +32,7 @@ export const Route = createFileRoute("/scan")({
 
 export default function ScanPage() {
   const nav = useNavigate();
-  const { addMedicine, profile, medicines, showToast, playFeedback } = useMedicine();
+  const { addMedicine, profile, medicines, findConsultationMatchForMedicine, showToast, playFeedback } = useMedicine();
 
   // Camera states
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -46,6 +48,7 @@ export default function ScanPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analyzingStep, setAnalyzingStep] = useState<string>("");
   const [analyzedData, setAnalyzedData] = useState<any | null>(null);
+  const [matchedDoctorRx, setMatchedDoctorRx] = useState<DoctorPrescriptionItem | null>(null);
   const [manualQuery, setManualQuery] = useState("");
   const [isSaved, setIsSaved] = useState(false);
 
@@ -180,7 +183,17 @@ export default function ScanPage() {
         setAnalyzedData(result.data);
         const hasAllergyWarning = Boolean(result.data.cocokProfil?.peringatanAlergi);
         playFeedback(hasAllergyWarning ? "alert" : "success");
-        if (result.data.teksPanduanSuara) {
+
+        // Cross-check with Doctor's consultation voice recordings!
+        const docMatch = findConsultationMatchForMedicine(result.data.nama || result.data.namaGenerik || query || "");
+        setMatchedDoctorRx(docMatch);
+
+        if (docMatch) {
+          // Speak doctor's exact instructions aloud for blind patients
+          const doctorVoiceGuidance = `Obat cocok dengan resep dokter Anda. ${docMatch.spokeSummary}. Catatan dokter: ${docMatch.doctorNotes || "Minum teratur"}.`;
+          speak(doctorVoiceGuidance, profile.settings.speechRate);
+          showToast(`Cocok dengan resep dokter: ${docMatch.frequency}`, "success");
+        } else if (result.data.teksPanduanSuara) {
           speak(result.data.teksPanduanSuara, profile.settings.speechRate);
         } else {
           speak(`Obat terdeteksi: ${result.data.nama}. Aturan pakai: ${result.data.aturanPakai}`, profile.settings.speechRate);
@@ -206,24 +219,24 @@ export default function ScanPage() {
       id: `med-${Date.now()}`,
       name: analyzedData.nama || manualQuery || "Obat Baru",
       genericName: analyzedData.namaGenerik || analyzedData.nama || "",
-      dosage: analyzedData.kandungan || "Sesuai resep",
+      dosage: matchedDoctorRx ? matchedDoctorRx.dosage : (analyzedData.kandungan || "Sesuai resep"),
       form: analyzedData.bentuk || "Tablet",
-      category: analyzedData.kategori || "Obat Resep",
+      category: matchedDoctorRx ? "Obat Resep Terverifikasi Dokter" : (analyzedData.kategori || "Obat Resep"),
       status: analyzedData.cocokProfil?.peringatanAlergi ? "warning" : "safe",
-      statusLabel: analyzedData.cocokProfil?.peringatanAlergi ? "Peringatan Alergi" : "Aman Dikonsumsi",
+      statusLabel: analyzedData.cocokProfil?.peringatanAlergi ? "Peringatan Alergi" : (matchedDoctorRx ? "Cocok Resep Dokter" : "Aman Dikonsumsi"),
       expiryDate: analyzedData.kadaluarsa || "Periksa kemasan",
       bpomNumber: analyzedData.bpom || "BPOM Terverifikasi",
-      indication: analyzedData.indikasi || "Sesuai petunjuk dokter",
-      instructions: analyzedData.aturanPakai || "1 kali sehari sesudah makan",
-      timing: (analyzedData.timing as any) || "after_meal",
-      timingLabel: analyzedData.timing === "before_meal" ? "Sebelum Makan" : "Setelah Makan",
+      indication: matchedDoctorRx ? matchedDoctorRx.instructions : (analyzedData.indikasi || "Sesuai petunjuk dokter"),
+      instructions: matchedDoctorRx ? matchedDoctorRx.instructions : (analyzedData.aturanPakai || "1 kali sehari sesudah makan"),
+      timing: matchedDoctorRx ? matchedDoctorRx.timing : ((analyzedData.timing as any) || "after_meal"),
+      timingLabel: matchedDoctorRx ? matchedDoctorRx.timingLabel : (analyzedData.timing === "before_meal" ? "Sebelum Makan" : "Setelah Makan"),
       recommendedTime: analyzedData.rekomendasiJam || "08:00",
       sideEffects: analyzedData.efekSamping || [],
-      precautions: analyzedData.peringatan || "",
+      precautions: matchedDoctorRx?.doctorNotes || analyzedData.peringatan || "",
       foodRestrictions: analyzedData.pantangan || [],
       interactions: analyzedData.interaksi || [],
       allergyWarning: analyzedData.cocokProfil?.peringatanAlergi,
-      teksPanduanSuara: analyzedData.teksPanduanSuara,
+      teksPanduanSuara: matchedDoctorRx ? matchedDoctorRx.spokeSummary : analyzedData.teksPanduanSuara,
       scannedAt: new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }),
     };
 
@@ -238,6 +251,7 @@ export default function ScanPage() {
   const resetScan = () => {
     setCapturedImage(null);
     setAnalyzedData(null);
+    setMatchedDoctorRx(null);
     setIsSaved(false);
     startCamera(facingMode);
   };
@@ -394,6 +408,43 @@ export default function ScanPage() {
         {/* Real Analyzed Result View */}
         {analyzedData && (
           <div className="space-y-4 pb-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            {/* Matched Doctor Prescription Banner */}
+            {matchedDoctorRx && (
+              <div
+                role="alert"
+                aria-live="assertive"
+                className="rounded-3xl bg-gradient-to-r from-emerald-900/90 to-teal-950/90 border-2 border-emerald-400 p-4 shadow-2xl flex items-start gap-3.5"
+              >
+                <div className="p-2.5 rounded-2xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 shrink-0 mt-0.5">
+                  <Stethoscope className="h-6 w-6" />
+                </div>
+                <div className="flex-1 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-400 text-black">
+                      Cocok Instruksi Dokter
+                    </span>
+                    <span className="text-[11px] font-bold text-emerald-300">
+                      {matchedDoctorRx.frequency}
+                    </span>
+                  </div>
+                  <h3 className="text-sm font-extrabold text-white mt-1">
+                    {matchedDoctorRx.instructions}
+                  </h3>
+                  {matchedDoctorRx.doctorNotes && (
+                    <p className="mt-1 text-emerald-200/90">
+                      <strong>Catatan Dokter:</strong> {matchedDoctorRx.doctorNotes}
+                    </p>
+                  )}
+                  <button
+                    onClick={() => speak(matchedDoctorRx.spokeSummary, profile.settings.speechRate)}
+                    className="mt-2.5 inline-flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-emerald-400 text-black font-extrabold text-[11px] active:scale-95 transition-all shadow"
+                  >
+                    <Volume2 className="h-3.5 w-3.5" /> Putar Ulang Suara Dokter
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Main Result Card */}
             <div className="rounded-3xl bg-slate-900 border border-white/10 p-5 shadow-2xl">
               <div className="flex items-start justify-between gap-3">

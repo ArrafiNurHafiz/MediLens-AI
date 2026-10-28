@@ -52,6 +52,13 @@ export default function Beranda() {
 
   const tiles = [
     {
+      to: "/konsultasi" as const,
+      label: "Rekam Suara Dokter",
+      sub: "Dikte arahan resep klinik",
+      icon: MessageCircle,
+      color: "bg-blue-500/20 text-blue-400 border border-blue-500/30",
+    },
+    {
       to: "/obat" as const,
       label: "Daftar Obat Saya",
       sub: `${totalMeds} obat terdaftar`,
@@ -64,13 +71,6 @@ export default function Beranda() {
       sub: nextPending ? `Berikutnya: ${nextPending.time}` : "Semua selesai",
       icon: CalendarClock,
       color: "bg-amber-500/20 text-amber-400 border border-amber-500/30",
-    },
-    {
-      to: "/tanya" as const,
-      label: "Tanya AI Dokter",
-      sub: "Konsultasi obat & efek",
-      icon: MessageCircle,
-      color: "bg-blue-500/20 text-blue-400 border border-blue-500/30",
     },
     {
       to: "/apotek" as const,

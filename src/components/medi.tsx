@@ -169,7 +169,16 @@ export function BottomNav() {
         activeProps={{ className: activeClass }}
       >
         <Pill className="h-5 w-5" />
-        <span>Obat Saya</span>
+        <span>Obat</span>
+      </Link>
+      <Link
+        to="/konsultasi"
+        onClick={() => playFeedback("click")}
+        className={navItem}
+        activeProps={{ className: activeClass }}
+      >
+        <Mic className="h-5 w-5" />
+        <span>Suara Dokter</span>
       </Link>
       <Link
         to="/tanya"
@@ -181,7 +190,7 @@ export function BottomNav() {
             : "bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 text-white ring-4 ring-slate-900"
         }`}
       >
-        <Mic className="h-7 w-7" />
+        <Sparkles className="h-7 w-7" />
       </Link>
       <Link
         to="/jadwal"
@@ -481,14 +490,17 @@ export function VoiceCommander() {
           } else if (command.includes("apotek") || command.includes("resep") || command.includes("beli")) {
             speak("Mencari apotek terdekat.", profile.settings.speechRate);
             nav({ to: "/apotek" });
-          } else if (command.includes("tanya") || command.includes("dokter") || command.includes("konsultasi")) {
+          } else if (command.includes("konsultasi") || command.includes("rekam") || command.includes("suara dokter")) {
+            speak("Membuka perekam arahan suara dokter.", profile.settings.speechRate);
+            nav({ to: "/konsultasi" });
+          } else if (command.includes("tanya") || command.includes("dokter")) {
             speak("Membuka asisten dokter AI.", profile.settings.speechRate);
             nav({ to: "/tanya" });
           } else if (command.includes("profil") || command.includes("profile") || command.includes("nama") || command.includes("biodata") || command.includes("akun")) {
             speak("Membuka profil kesehatan dan pengaturan nama pengguna.", profile.settings.speechRate);
             nav({ to: "/profile" });
           } else {
-            speak(`Perintah "${command}" tidak dikenali. Katakan beranda, obat, scan, jadwal, atau apotek.`);
+            speak(`Perintah "${command}" tidak dikenali. Katakan beranda, obat, scan, konsultasi, jadwal, atau apotek.`);
           }
         };
 
