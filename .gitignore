@@ -1,50 +1,53 @@
-# Logs
-logs
+# Miscellaneous
+*.class
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-node_modules
-dist
-dist-ssr
-.output
-.vinxi
-.tanstack/**
-.nitro
-*.local
-
-# Wrangler / Cloudflare
-.wrangler/
-.dev.vars
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+*.pyc
+*.swp
+*.bak
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-.vercel
+
+# IDE
+.idea/
+*.iml
+.metadata
+
+# Flutter/Dart/Pub related
+**/doc/api/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+/build/
+/coverage/
+
+# APK & Bundle binaries
+*.apk
+*.aab
+MediLensAI-v1.0.0.apk
+public/MediLensAI.apk
+
+# Android local & caches
+android/local.properties
+android/.gradle/
+**/android/.gradle/
+android/app/build/
+**/android/app/build/
+android/.vercel/
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Environment & Secrets
 .env*
 !.env.example
+*.local
 
-# Lovable metadata
-.lovable/
-
-# Next / cache / testing
+# Node legacy
+node_modules/
+.output/
+.vercel/
 .next/
+.wrangler/
 .playwright-mcp/
-
-# Android build artifacts and local device configs
-.gradle/
-android/.gradle/
-android/app/build/
-android/local.properties
-android/.vercel/
-*.apk
