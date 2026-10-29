@@ -14,6 +14,7 @@ class MedicineProvider extends ChangeNotifier {
   List<DoctorConsultation> _consultations = [];
   UserProfile _profile = UserProfile();
   bool _isLoaded = false;
+  bool _isOnboarded = false;
 
   final FlutterTts _tts = FlutterTts();
 
@@ -24,6 +25,7 @@ class MedicineProvider extends ChangeNotifier {
       _consultations.isNotEmpty ? _consultations.first : null;
   UserProfile get profile => _profile;
   bool get isLoaded => _isLoaded;
+  bool get isOnboarded => _isOnboarded;
 
   MedicineProvider() {
     _initTts();
@@ -101,6 +103,9 @@ class MedicineProvider extends ChangeNotifier {
       if (profileJson != null) {
         _profile = UserProfile.fromJson(jsonDecode(profileJson));
       }
+
+      final savedOnboarded = prefs.getBool('medilens_fresh_v2_onboarded') ?? false;
+      _isOnboarded = savedOnboarded && _profile.name.trim().isNotEmpty;
     } catch (e) {
       debugPrint('Storage load error: $e');
     } finally {
@@ -231,6 +236,22 @@ class MedicineProvider extends ChangeNotifier {
     _saveToStorage();
     triggerHaptic('success');
     notifyListeners();
+  }
+
+  Future<void> completeOnboarding(String userName) async {
+    final cleanName = userName.trim().isNotEmpty ? userName.trim() : 'Pengguna';
+    _profile.name = cleanName;
+    _isOnboarded = true;
+    notifyListeners(); // Transisi UI instan tanpa menunggu penulisan storage
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('medilens_fresh_v2_onboarded', true);
+      await _saveToStorage();
+      triggerHaptic('success');
+      speak('Terima kasih $cleanName. Profil Anda telah aktif. Selamat datang di MediLens AI.');
+    } catch (e) {
+      debugPrint('Onboarding save error: $e');
+    }
   }
 
   void updateAccessibility(AccessibilitySettings newSettings) {

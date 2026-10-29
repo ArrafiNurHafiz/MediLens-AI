@@ -7,6 +7,7 @@ import 'screens/doctor_consultation_screen.dart';
 import 'screens/scan_screen.dart';
 import 'screens/medicine_cabinet_screen.dart';
 import 'screens/schedule_screen.dart';
+import 'screens/welcome_name_screen.dart';
 import 'widgets/voice_commander_dialog.dart';
 
 void main() {
@@ -34,7 +35,9 @@ class MediLensApp extends StatelessWidget {
         highContrast: settings.highContrast,
         largeFont: settings.largeFont,
       ),
-      home: const MainNavigationShell(),
+      home: provider.isOnboarded
+          ? const MainNavigationShell()
+          : const WelcomeNameScreen(),
     );
   }
 }

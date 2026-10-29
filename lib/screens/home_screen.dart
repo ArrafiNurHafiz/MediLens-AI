@@ -422,12 +422,76 @@ class HomeScreen extends StatelessWidget {
                       provider.updateAccessibility(s);
                     },
                   ),
+                  ListTile(
+                    leading: Icon(Icons.person, color: isHC ? const Color(0xFFFFE600) : Colors.blueAccent),
+                    title: Text(
+                      'Ubah Nama Pengguna (${provider.profile.name})',
+                      style: TextStyle(color: isHC ? const Color(0xFFFFE600) : Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      'Ketuk untuk mengganti nama via suara atau keyboard',
+                      style: TextStyle(color: isHC ? const Color(0xFFFFE600).withValues(alpha: 0.6) : Colors.white60, fontSize: 11),
+                    ),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _showEditNameDialog(context, provider);
+                    },
+                  ),
                 ],
               ),
             );
           },
         );
       },
+    );
+  }
+
+  void _showEditNameDialog(BuildContext context, MedicineProvider provider) {
+    final controller = TextEditingController(text: provider.profile.name);
+    final isHC = provider.profile.settings.highContrast;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isHC ? Colors.black : const Color(0xFF131B2E),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(color: isHC ? const Color(0xFFFFE600) : Colors.white12, width: isHC ? 3 : 1),
+        ),
+        title: Text(
+          'Ubah Nama Pengguna',
+          style: TextStyle(color: isHC ? const Color(0xFFFFE600) : Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: TextField(
+          controller: controller,
+          style: TextStyle(color: isHC ? const Color(0xFFFFE600) : Colors.white),
+          decoration: InputDecoration(
+            hintText: 'Masukkan nama baru...',
+            hintStyle: TextStyle(color: isHC ? const Color(0xFFFFE600).withValues(alpha: 0.5) : Colors.white38),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('Batal', style: TextStyle(color: isHC ? const Color(0xFFFFE600) : Colors.white60)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isHC ? const Color(0xFFFFE600) : Colors.blueAccent,
+              foregroundColor: isHC ? Colors.black : Colors.white,
+            ),
+            onPressed: () {
+              final newName = controller.text.trim();
+              if (newName.isNotEmpty) {
+                provider.completeOnboarding(newName);
+                Navigator.pop(ctx);
+              }
+            },
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
     );
   }
 }

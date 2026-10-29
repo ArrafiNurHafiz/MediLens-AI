@@ -373,7 +373,7 @@ class UserProfile {
   AccessibilitySettings settings;
 
   UserProfile({
-    this.name = 'Arrafi Nur Hafiz',
+    this.name = '',
     this.age = 25,
     this.gender = 'Laki-laki',
     this.bloodType = 'O+',
@@ -400,7 +400,7 @@ class UserProfile {
       };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
-        name: json['name'] ?? 'Arrafi Nur Hafiz',
+        name: json['name'] ?? '',
         age: json['age'] ?? 25,
         gender: json['gender'] ?? 'Laki-laki',
         bloodType: json['bloodType'] ?? 'O+',
