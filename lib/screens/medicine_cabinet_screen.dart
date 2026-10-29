@@ -131,13 +131,35 @@ class _MedicineCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      '${med.dosage} • ${med.timingLabel}',
-                      style: TextStyle(
-                        color: isHC ? const Color(0xFFFFE600) : const Color(0xFF38BDF8),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          '${med.dosage} • ${med.timingLabel}',
+                          style: TextStyle(
+                            color: isHC ? const Color(0xFFFFE600) : const Color(0xFF38BDF8),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                        if (!med.dosageConfirmed) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: isHC ? const Color(0xFFFFE600) : Colors.red.shade900,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              'BUTUH KONFIRMASI DOKTER',
+                              style: TextStyle(
+                                color: isHC ? Colors.black : Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 9,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),

@@ -33,56 +33,71 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        title: Row(
           children: [
-            Row(
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.asset(
+                'assets/images/logo.png',
+                height: 38,
+                width: 38,
+                fit: BoxFit.cover,
+                errorBuilder: (ctx, err, stack) => const Icon(Icons.lens, size: 38),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: isHC
-                        ? const Color(0xFFFFE600).withValues(alpha: 0.2)
-                        : const Color(0xFF10B981).withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isHC ? const Color(0xFFFFE600) : const Color(0xFF10B981),
-                      width: 1,
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isHC
+                            ? const Color(0xFFFFE600).withValues(alpha: 0.2)
+                            : const Color(0xFF10B981).withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isHC ? const Color(0xFFFFE600) : const Color(0xFF10B981),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            height: 6,
+                            width: 6,
+                            decoration: BoxDecoration(
+                              color: isHC ? const Color(0xFFFFE600) : const Color(0xFF34D399),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'SISTEM AKTIF',
+                            style: TextStyle(
+                              color: isHC ? const Color(0xFFFFE600) : const Color(0xFF34D399),
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        height: 6,
-                        width: 6,
-                        decoration: BoxDecoration(
-                          color: isHC ? const Color(0xFFFFE600) : const Color(0xFF34D399),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'SISTEM AKTIF',
-                        style: TextStyle(
-                          color: isHC ? const Color(0xFFFFE600) : const Color(0xFF34D399),
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Halo, ${provider.profile.name}',
+                  style: TextStyle(
+                    color: isHC ? const Color(0xFFFFE600) : Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Halo, ${provider.profile.name}',
-              style: TextStyle(
-                color: isHC ? const Color(0xFFFFE600) : Colors.white,
-                fontWeight: FontWeight.w900,
-                fontSize: 20,
-              ),
             ),
           ],
         ),

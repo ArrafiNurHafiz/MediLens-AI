@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../models/medicine_models.dart';
 import '../providers/medicine_provider.dart';
 
@@ -26,11 +27,19 @@ class _ScanScreenState extends State<ScanScreen> {
   DoctorPrescriptionItem? _matchedDoctorRx;
   bool _isSaved = false;
 
+  // State klarifikasi aturan minum (Safety Contract)
+  late stt.SpeechToText _speech;
+  bool _isListeningClarification = false;
+  String? _verbalFrequency;
+  String _verbalTiming = 'Setelah Makan';
+  bool _userForgotDosage = false;
+
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    _speech = stt.SpeechToText();
     _initCamera();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -73,7 +82,7 @@ class _ScanScreenState extends State<ScanScreen> {
       } else {
         await _cameraController!.setFlashMode(FlashMode.torch);
         setState(() => _isFlashOn = true);
-        provider.speak('Lampu senter menyala untuk memperjelas obat.');
+        provider.speak('Lampu senter menyala untuk memperjelas kemasan obat.');
       }
     } catch (e) {
       debugPrint('Flash error: $e');
@@ -107,10 +116,12 @@ class _ScanScreenState extends State<ScanScreen> {
       _analyzedData = null;
       _matchedDoctorRx = null;
       _isSaved = false;
+      _verbalFrequency = null;
+      _userForgotDosage = false;
       _analyzingStep = 'Menganalisis kemasan obat dengan AI...';
     });
 
-    provider.speak('Foto diambil. Sedang memproses analisis obat.');
+    provider.speak('Foto diambil. Sedang memverifikasi kemasan obat.');
 
     try {
       final res = await provider.analyzeMedicineApi(
@@ -134,16 +145,17 @@ class _ScanScreenState extends State<ScanScreen> {
               'Objek di depan kamera bukan kemasan obat. Arahkan kamera ke strip atau botol obat Anda.';
           provider.speak(guideText);
         } else if (docMatch != null) {
+          // Kasus A: Cocok dengan resep rekaman dokter!
           provider.triggerHaptic('success');
           final text =
               'Obat cocok dengan resep dokter Anda. ${docMatch.spokeSummary}. Catatan dokter: ${docMatch.doctorNotes ?? "Minum teratur"}.';
           provider.speak(text);
-        } else if (res['teksPanduanSuara'] != null) {
-          provider.triggerHaptic('success');
-          provider.speak(res['teksPanduanSuara']);
         } else {
-          provider.triggerHaptic('success');
-          provider.speak('Obat terdeteksi $medName. ${res["aturanPakai"] ?? ""}');
+          // Kasus B: Obat sah, tapi TIDAK ADA rekaman dokter. JANGAN MENGARANG ATURAN MINUM!
+          provider.triggerHaptic('alert');
+          final text =
+              'Obat teridentifikasi $medName. Belum ada rekaman dokter untuk obat ini. Apakah dokter memberitahu berapa kali sehari obat ini harus diminum? Bicara arahan dokter atau ketuk tombol Saya Lupa.';
+          provider.speak(text);
         }
       }
     } finally {
@@ -156,36 +168,149 @@ class _ScanScreenState extends State<ScanScreen> {
     }
   }
 
+  void _startListeningClarification() async {
+    final provider = context.read<MedicineProvider>();
+    provider.triggerHaptic('click');
+    provider.stopSpeech();
+
+    bool available = await _speech.initialize(
+      onStatus: (status) {
+        if (status == 'notListening' && mounted) {
+          setState(() => _isListeningClarification = false);
+        }
+      },
+      onError: (val) {
+        if (mounted) setState(() => _isListeningClarification = false);
+      },
+    );
+
+    if (available) {
+      setState(() => _isListeningClarification = true);
+      provider.speak('Silakan bicara aturan minum dari dokter.');
+      _speech.listen(
+        onResult: (val) {
+          if (mounted) {
+            final words = val.recognizedWords.toLowerCase();
+            if (val.finalResult) {
+              _processVerbalClarification(words);
+            }
+          }
+        },
+      );
+    } else {
+      provider.speak('Mikrofon tidak dapat diakses.');
+    }
+  }
+
+  void _processVerbalClarification(String words) {
+    final provider = context.read<MedicineProvider>();
+
+    if (words.contains('lupa') ||
+        words.contains('tidak tahu') ||
+        words.contains('nggak tahu') ||
+        words.contains('kurang tahu') ||
+        words.contains('tidak ingat')) {
+      _handlePatientForgot();
+      return;
+    }
+
+    String freq = '2x sehari';
+    if (words.contains('1') || words.contains('satu') || words.contains('sekali')) {
+      freq = '1x sehari';
+    } else if (words.contains('2') || words.contains('dua')) {
+      freq = '2x sehari';
+    } else if (words.contains('3') || words.contains('tiga')) {
+      freq = '3x sehari';
+    } else if (words.contains('4') || words.contains('empat')) {
+      freq = '4x sehari';
+    }
+
+    String timing = 'Setelah Makan';
+    if (words.contains('sebelum')) {
+      timing = 'Sebelum Makan';
+    }
+
+    setState(() {
+      _verbalFrequency = freq;
+      _verbalTiming = timing;
+      _userForgotDosage = false;
+    });
+
+    provider.triggerHaptic('success');
+    provider.speak(
+      'Baik, dicatat diminum $freq $timing sesuai arahan dokter yang Anda sampaikan.',
+    );
+  }
+
+  void _handlePatientForgot() {
+    final provider = context.read<MedicineProvider>();
+    setState(() {
+      _userForgotDosage = true;
+      _verbalFrequency = null;
+    });
+
+    provider.triggerHaptic('warning');
+    final warning =
+        'Demi keselamatan Anda, jangan menebak dosis obat. Hubungi dokter pendamping Anda ${provider.profile.doctorName} atau tanyakan apoteker sebelum meminumnya.';
+    provider.speak(warning);
+  }
+
   void _saveToCabinet() {
     if (_analyzedData == null || _analyzedData!['isMedicine'] == false) return;
     final provider = context.read<MedicineProvider>();
 
     final rx = _matchedDoctorRx;
+    final bool isConfirmed = rx != null || _verbalFrequency != null;
+    final String source = rx != null
+        ? 'doctor_recording'
+        : (_verbalFrequency != null ? 'patient_verbal' : 'unconfirmed');
+
+    final String instructionText = rx != null
+        ? rx.instructions
+        : (_verbalFrequency != null
+            ? 'Diminum $_verbalFrequency $_verbalTiming (sesuai arahan lisan pasien)'
+            : 'Perhatian: Dosis belum terkonfirmasi dokter. Jangan diminum sebelum konfirmasi!');
+
     final newMed = Medicine(
       id: 'med-${DateTime.now().millisecondsSinceEpoch}',
       name: _analyzedData!['nama'] ?? 'Obat Baru',
       genericName: _analyzedData!['namaGenerik'] ?? _analyzedData!['nama'] ?? '',
-      dosage: rx?.dosage ?? _analyzedData!['kandungan'] ?? 'Sesuai resep',
-      category: rx != null ? 'Obat Resep Terverifikasi Dokter' : (_analyzedData!['kategori'] ?? 'Obat Resep'),
-      status: 'safe',
-      statusLabel: rx != null ? 'Cocok Resep Dokter' : 'Aman Dikonsumsi',
-      instructions: rx?.instructions ?? _analyzedData!['aturanPakai'] ?? '1 kali sehari sesudah makan',
-      timing: rx?.timing ?? _analyzedData!['timing'] ?? 'after_meal',
-      timingLabel: rx?.timingLabel ?? (_analyzedData!['timing'] == 'before_meal' ? 'Sebelum Makan' : 'Setelah Makan'),
-      recommendedTime: _analyzedData!['rekomendasiJam'] ?? '08:00',
-      precautions: rx?.doctorNotes ?? _analyzedData!['peringatan'] ?? '',
-      teksPanduanSuara: rx?.spokeSummary ?? _analyzedData!['teksPanduanSuara'],
+      dosage: rx?.dosage ?? _analyzedData!['kandungan'] ?? 'Sesuai petunjuk',
+      category: isConfirmed ? 'Obat Terkonfirmasi' : 'Dosis Belum Terkonfirmasi',
+      status: isConfirmed ? 'safe' : 'warning',
+      statusLabel: isConfirmed
+          ? (rx != null ? 'Resep Dokter Terverifikasi' : 'Aturan Lisan Pasien')
+          : 'Menunggu Konfirmasi Dokter',
+      instructions: instructionText,
+      timing: _verbalTiming == 'Sebelum Makan' ? 'before_meal' : 'after_meal',
+      timingLabel: _verbalTiming,
+      recommendedTime: '08:00',
+      precautions: _userForgotDosage
+          ? 'WAJIB KONFIRMASI DOKTER / APOTEKER SEBELUM KONSUMSI.'
+          : (rx?.doctorNotes ?? _analyzedData!['peringatan'] ?? ''),
+      teksPanduanSuara: isConfirmed
+          ? 'Obat ${_analyzedData!["nama"]}. $instructionText'
+          : 'Obat ${_analyzedData!["nama"]}. Dosis belum terkonfirmasi. Hubungi dokter atau apoteker.',
+      dosageConfirmed: isConfirmed,
+      dosageSource: source,
     );
 
     provider.addMedicine(newMed);
     setState(() => _isSaved = true);
-    provider.speak('${newMed.name} berhasil disimpan ke lemari obat dan jadwal harian.');
+
+    if (isConfirmed) {
+      provider.speak('${newMed.name} disimpan ke lemari obat dan jadwal harian.');
+    } else {
+      provider.speak('${newMed.name} disimpan ke lemari dengan status menunggu konfirmasi dokter.');
+    }
   }
 
   void _resetScan() {
     setState(() {
       _analyzedData = null;
       _matchedDoctorRx = null;
+      _verbalFrequency = null;
+      _userForgotDosage = false;
       _isSaved = false;
       _searchController.clear();
     });
@@ -196,6 +321,7 @@ class _ScanScreenState extends State<ScanScreen> {
 
   @override
   void dispose() {
+    _speech.stop();
     _cameraController?.dispose();
     _searchController.dispose();
     super.dispose();
@@ -212,7 +338,7 @@ class _ScanScreenState extends State<ScanScreen> {
         backgroundColor: isHC ? Colors.black : const Color(0xFF131B2E),
         elevation: 0,
         title: Text(
-          'Pemindai Obat',
+          'Pemindai Obat Cerdas',
           style: TextStyle(
             color: isHC ? const Color(0xFFFFE600) : Colors.white,
             fontWeight: FontWeight.bold,
@@ -432,6 +558,7 @@ class _ScanScreenState extends State<ScanScreen> {
 
   Widget _buildResultView(MedicineProvider provider, bool isHC) {
     final isMed = _analyzedData!['isMedicine'] != false;
+    final rx = _matchedDoctorRx;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -470,7 +597,7 @@ class _ScanScreenState extends State<ScanScreen> {
                   const SizedBox(height: 8),
                   Text(
                     _analyzedData!['indikasi'] ??
-                        'Objek yang tertangkap kamera tidak menyerupai kemasan obat, tablet, sirup, atau resep dokter yang sah.',
+                        'Objek yang tertangkap kamera bukan kemasan obat, tablet, sirup, atau resep dokter yang sah.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: isHC ? const Color(0xFFFFE600) : const Color(0xFFFECACA),
@@ -495,8 +622,8 @@ class _ScanScreenState extends State<ScanScreen> {
             ),
           ] else ...[
             // Kasus 2: OBAT SAH
-            // Banner Cocok Resep Dokter (Bolo Doctor Cross-Check)
-            if (_matchedDoctorRx != null) ...[
+            // 2A: Jika ADA rekaman dokter yang cocok
+            if (rx != null) ...[
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -530,23 +657,23 @@ class _ScanScreenState extends State<ScanScreen> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              'COCOK REKAMAN DOKTER (${_matchedDoctorRx!.frequency})',
+                              'COCOK REKAMAN DOKTER (${rx.frequency})',
                               style: const TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.w900),
                             ),
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            _matchedDoctorRx!.instructions,
+                            rx.instructions,
                             style: TextStyle(
                               color: isHC ? const Color(0xFFFFE600) : Colors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
                             ),
                           ),
-                          if (_matchedDoctorRx!.doctorNotes != null) ...[
+                          if (rx.doctorNotes != null) ...[
                             const SizedBox(height: 4),
                             Text(
-                              'Catatan: ${_matchedDoctorRx!.doctorNotes}',
+                              'Catatan: ${rx.doctorNotes}',
                               style: TextStyle(
                                 color: isHC ? const Color(0xFFFFE600) : const Color(0xFF6EE7B7),
                                 fontSize: 12,
@@ -561,10 +688,252 @@ class _ScanScreenState extends State<ScanScreen> {
                             ),
                             icon: const Icon(Icons.volume_up, size: 16),
                             label: const Text('Putar Ulang Arahan Dokter', style: TextStyle(fontSize: 11)),
-                            onPressed: () => provider.speak(_matchedDoctorRx!.spokeSummary),
+                            onPressed: () => provider.speak(rx.spokeSummary),
                           ),
                         ],
                       ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ] else ...[
+              // 2B: BELUM ADA REKAMAN DOKTER (Safety First Dialog)
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: isHC ? Colors.black : const Color(0xFF1E1B4B).withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: isHC ? const Color(0xFFFFE600) : const Color(0xFF818CF8),
+                    width: isHC ? 3 : 2,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.contact_support,
+                          color: isHC ? const Color(0xFFFFE600) : const Color(0xFFA5B4FC),
+                          size: 26,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'Klarifikasi Aturan Minum Dokter',
+                            style: TextStyle(
+                              color: isHC ? const Color(0xFFFFE600) : Colors.white,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Obat ini belum tercatat dalam rekaman dokter Anda. Berapa kali sehari dokter menyuruh Anda meminum obat ini?',
+                      style: TextStyle(
+                        color: isHC ? const Color(0xFFFFE600) : const Color(0xFFC7D2FE),
+                        fontSize: 13,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Jika pasien sudah menjawab lisan
+                    if (_verbalFrequency != null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: isHC ? const Color(0xFFFFE600).withValues(alpha: 0.15) : const Color(0xFF065F46).withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isHC ? const Color(0xFFFFE600) : const Color(0xFF34D399),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.check_circle, color: isHC ? const Color(0xFFFFE600) : const Color(0xFF34D399)),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'Terkonfirmasi: Diminum $_verbalFrequency $_verbalTiming (sesuai ingatan Anda)',
+                                style: TextStyle(
+                                  color: isHC ? const Color(0xFFFFE600) : Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+
+                    // Jika pasien menyatakan lupa
+                    if (_userForgotDosage) ...[
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: isHC ? Colors.black : const Color(0xFF450A0A),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isHC ? const Color(0xFFFFE600) : Colors.redAccent,
+                            width: 2,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.shield_outlined, color: isHC ? const Color(0xFFFFE600) : Colors.redAccent),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Protokol Keselamatan Medis',
+                                  style: TextStyle(
+                                    color: isHC ? const Color(0xFFFFE600) : Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Jangan menebak dosis! Segera hubungi dokter Anda untuk memastikan aturan minum obat ini:',
+                              style: TextStyle(
+                                color: isHC ? const Color(0xFFFFE600) : const Color(0xFFFCA5A5),
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: isHC ? const Color(0xFFFFE600) : Colors.red.shade900,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                '${provider.profile.doctorName}: ${provider.profile.doctorPhone}',
+                                style: TextStyle(
+                                  color: isHC ? Colors.black : Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+
+                    // Tombol Interaksi Bicara & Opsi Lupa
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _isListeningClarification
+                                  ? Colors.redAccent
+                                  : (isHC ? const Color(0xFFFFE600) : const Color(0xFF4F46E5)),
+                              foregroundColor: isHC ? Colors.black : Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            ),
+                            icon: Icon(_isListeningClarification ? Icons.mic : Icons.mic_none),
+                            label: Text(
+                              _isListeningClarification ? 'Mendengarkan...' : 'Jawab via Suara',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                            ),
+                            onPressed: _startListeningClarification,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          flex: 2,
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: isHC ? const Color(0xFFFFE600) : const Color(0xFFFCA5A5),
+                              side: BorderSide(
+                                color: isHC ? const Color(0xFFFFE600) : Colors.redAccent.withValues(alpha: 0.6),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            ),
+                            onPressed: _handlePatientForgot,
+                            child: const Text(
+                              'Saya Lupa',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // Quick Chips Selection
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        _QuickDosageChip(
+                          label: '1x Sehari',
+                          isSelected: _verbalFrequency == '1x sehari',
+                          isHC: isHC,
+                          onTap: () {
+                            setState(() {
+                              _verbalFrequency = '1x sehari';
+                              _userForgotDosage = false;
+                            });
+                            provider.speak('Dipilih 1 kali sehari setelah makan.');
+                          },
+                        ),
+                        _QuickDosageChip(
+                          label: '2x Sehari',
+                          isSelected: _verbalFrequency == '2x sehari',
+                          isHC: isHC,
+                          onTap: () {
+                            setState(() {
+                              _verbalFrequency = '2x sehari';
+                              _userForgotDosage = false;
+                            });
+                            provider.speak('Dipilih 2 kali sehari setelah makan.');
+                          },
+                        ),
+                        _QuickDosageChip(
+                          label: '3x Sehari',
+                          isSelected: _verbalFrequency == '3x sehari',
+                          isHC: isHC,
+                          onTap: () {
+                            setState(() {
+                              _verbalFrequency = '3x sehari';
+                              _userForgotDosage = false;
+                            });
+                            provider.speak('Dipilih 3 kali sehari setelah makan.');
+                          },
+                        ),
+                        _QuickDosageChip(
+                          label: 'Saat Perlu (PRN)',
+                          isSelected: _verbalFrequency == 'Bila Perlu',
+                          isHC: isHC,
+                          onTap: () {
+                            setState(() {
+                              _verbalFrequency = 'Bila Perlu';
+                              _userForgotDosage = false;
+                            });
+                            provider.speak('Dipilih diminum hanya bila perlu saat gejala timbul.');
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -615,9 +984,11 @@ class _ScanScreenState extends State<ScanScreen> {
                         tooltip: 'Dengarkan Ulang Suara Penjelasan',
                         icon: Icon(Icons.volume_up, size: 30, color: isHC ? const Color(0xFFFFE600) : const Color(0xFF10B981)),
                         onPressed: () {
-                          final text = _matchedDoctorRx != null
-                              ? _matchedDoctorRx!.spokeSummary
-                              : (_analyzedData!['teksPanduanSuara'] ?? '${_analyzedData!["nama"]}. ${_analyzedData!["aturanPakai"]}');
+                          final text = rx != null
+                              ? rx.spokeSummary
+                              : (_verbalFrequency != null
+                                  ? 'Obat ${_analyzedData!["nama"]}. Diminum $_verbalFrequency $_verbalTiming sesuai ingatan Anda.'
+                                  : 'Obat ${_analyzedData!["nama"]}. Dosis belum terkonfirmasi dari dokter.');
                           provider.speak(text);
                         },
                       ),
@@ -628,14 +999,19 @@ class _ScanScreenState extends State<ScanScreen> {
 
                   _InfoRow(label: 'Indikasi / Khasiat', value: _analyzedData!['indikasi'] ?? '-', isHC: isHC),
                   _InfoRow(
-                    label: 'Aturan Pakai',
-                    value: _matchedDoctorRx?.instructions ?? _analyzedData!['aturanPakai'] ?? '-',
+                    label: 'Status Aturan Pakai',
+                    value: rx != null
+                        ? rx.instructions
+                        : (_verbalFrequency != null
+                            ? 'Diminum $_verbalFrequency $_verbalTiming'
+                            : 'BELUM TERKONFIRMASI (Tanya Dokter)'),
                     isHC: isHC,
                   ),
                   _InfoRow(
-                    label: 'Waktu Minum',
-                    value:
-                        '${_matchedDoctorRx?.timingLabel ?? (_analyzedData!["timing"] == "before_meal" ? "Sebelum Makan" : "Setelah Makan")} (${_analyzedData!["rekomendasiJam"] ?? "08:00"})',
+                    label: 'Sumber Aturan',
+                    value: rx != null
+                        ? 'Resep Rekaman Dokter'
+                        : (_verbalFrequency != null ? 'Konfirmasi Lisan Pasien' : 'Menunggu Konfirmasi'),
                     isHC: isHC,
                   ),
                   _InfoRow(label: 'Izin BPOM', value: _analyzedData!['bpom'] ?? 'BPOM Terverifikasi', isHC: isHC),
@@ -679,6 +1055,49 @@ class _ScanScreenState extends State<ScanScreen> {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _QuickDosageChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final bool isHC;
+  final VoidCallback onTap;
+
+  const _QuickDosageChip({
+    required this.label,
+    required this.isSelected,
+    required this.isHC,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? (isHC ? const Color(0xFFFFE600) : const Color(0xFF38BDF8))
+              : (isHC ? Colors.black : Colors.white10),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isHC ? const Color(0xFFFFE600) : (isSelected ? const Color(0xFF38BDF8) : Colors.white24),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.black : (isHC ? const Color(0xFFFFE600) : Colors.white),
+            fontSize: 11,
+            fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+          ),
+        ),
       ),
     );
   }

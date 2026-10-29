@@ -138,25 +138,28 @@ class MedicineProvider extends ChangeNotifier {
       _medicines.insert(0, medicine);
     }
 
-    final hour = int.tryParse(medicine.recommendedTime.split(':').first) ?? 8;
-    final timeSlot = hour < 11
-        ? 'pagi'
-        : hour < 15
-            ? 'siang'
-            : hour < 18
-                ? 'sore'
-                : 'malam';
+    // Hanya buat jadwal jika dosis sudah terkonfirmasi oleh resep dokter atau penjelasan pasien
+    if (medicine.dosageConfirmed) {
+      final hour = int.tryParse(medicine.recommendedTime.split(':').first) ?? 8;
+      final timeSlot = hour < 11
+          ? 'pagi'
+          : hour < 15
+              ? 'siang'
+              : hour < 18
+                  ? 'sore'
+                  : 'malam';
 
-    _schedule.add(ScheduleItem(
-      id: 'sch-${DateTime.now().millisecondsSinceEpoch}',
-      medicineId: medicine.id,
-      medicineName: medicine.name,
-      dosage: medicine.dosage,
-      time: medicine.recommendedTime,
-      timeSlot: timeSlot,
-      timingLabel: medicine.timingLabel,
-      instruction: medicine.instructions,
-    ));
+      _schedule.add(ScheduleItem(
+        id: 'sch-${DateTime.now().millisecondsSinceEpoch}',
+        medicineId: medicine.id,
+        medicineName: medicine.name,
+        dosage: medicine.dosage,
+        time: medicine.recommendedTime,
+        timeSlot: timeSlot,
+        timingLabel: medicine.timingLabel,
+        instruction: medicine.instructions,
+      ));
+    }
 
     _saveToStorage();
     triggerHaptic('success');

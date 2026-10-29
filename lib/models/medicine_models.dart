@@ -73,6 +73,8 @@ class Medicine {
   final String? teksPanduanSuara;
   final String? scannedAt;
   bool takenToday;
+  final bool dosageConfirmed;
+  final String dosageSource; // 'doctor_recording' | 'patient_verbal' | 'unconfirmed'
 
   Medicine({
     required this.id,
@@ -99,6 +101,8 @@ class Medicine {
     this.teksPanduanSuara,
     this.scannedAt,
     this.takenToday = false,
+    this.dosageConfirmed = true,
+    this.dosageSource = 'doctor_recording',
   });
 
   Map<String, dynamic> toJson() => {
@@ -126,6 +130,8 @@ class Medicine {
         'teksPanduanSuara': teksPanduanSuara,
         'scannedAt': scannedAt,
         'takenToday': takenToday,
+        'dosageConfirmed': dosageConfirmed,
+        'dosageSource': dosageSource,
       };
 
   factory Medicine.fromJson(Map<String, dynamic> json) => Medicine(
@@ -157,6 +163,8 @@ class Medicine {
         teksPanduanSuara: json['teksPanduanSuara'],
         scannedAt: json['scannedAt'],
         takenToday: json['takenToday'] ?? false,
+        dosageConfirmed: json['dosageConfirmed'] ?? true,
+        dosageSource: json['dosageSource'] ?? 'doctor_recording',
       );
 }
 
@@ -360,6 +368,8 @@ class UserProfile {
   String bloodType;
   List<String> conditions;
   List<String> allergies;
+  String doctorName;
+  String doctorPhone;
   AccessibilitySettings settings;
 
   UserProfile({
@@ -372,6 +382,8 @@ class UserProfile {
       'Riwayat Dispepsia (Asam Lambung)'
     ],
     this.allergies = const ['Penisilin / Amoxicillin'],
+    this.doctorName = 'Dr. Budi Santoso, Sp.PD',
+    this.doctorPhone = '+62 812-3456-7890',
     AccessibilitySettings? settings,
   }) : settings = settings ?? AccessibilitySettings();
 
@@ -382,6 +394,8 @@ class UserProfile {
         'bloodType': bloodType,
         'conditions': conditions,
         'allergies': allergies,
+        'doctorName': doctorName,
+        'doctorPhone': doctorPhone,
         'settings': settings.toJson(),
       };
 
@@ -392,6 +406,8 @@ class UserProfile {
         bloodType: json['bloodType'] ?? 'O+',
         conditions: List<String>.from(json['conditions'] ?? []),
         allergies: List<String>.from(json['allergies'] ?? []),
+        doctorName: json['doctorName'] ?? 'Dr. Budi Santoso, Sp.PD',
+        doctorPhone: json['doctorPhone'] ?? '+62 812-3456-7890',
         settings: json['settings'] != null
             ? AccessibilitySettings.fromJson(json['settings'])
             : AccessibilitySettings(),
