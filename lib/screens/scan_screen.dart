@@ -19,6 +19,7 @@ class _ScanScreenState extends State<ScanScreen> {
   List<CameraDescription> _cameras = [];
   bool _isCameraReady = false;
   bool _isAnalyzing = false;
+  bool _isFlashOn = false;
   String _analyzingStep = '';
 
   Map<String, dynamic>? _analyzedData;
@@ -36,7 +37,8 @@ class _ScanScreenState extends State<ScanScreen> {
       final p = context.read<MedicineProvider>();
       if (p.profile.settings.autoVoice) {
         p.speak(
-            'Kamera pemindai obat aktif. Arahkan kamera ke kemasan obat sekitar 15 sampai 20 sentimeter. Ketuk di mana saja pada layar kamera untuk memotret.');
+          'Kamera pemindai obat aktif. Arahkan kamera ke kemasan obat. Ketuk layar dua kali di mana saja untuk memotret.',
+        );
       }
     });
   }
@@ -47,7 +49,7 @@ class _ScanScreenState extends State<ScanScreen> {
       if (_cameras.isNotEmpty) {
         _cameraController = CameraController(
           _cameras.first,
-          ResolutionPreset.medium,
+          ResolutionPreset.high,
           enableAudio: false,
         );
         await _cameraController!.initialize();
@@ -58,9 +60,30 @@ class _ScanScreenState extends State<ScanScreen> {
     }
   }
 
-  void _captureAndAnalyze() async {
+  void _toggleFlash() async {
+    if (_cameraController == null || !_cameraController!.value.isInitialized) return;
     final provider = context.read<MedicineProvider>();
     provider.triggerHaptic('click');
+
+    try {
+      if (_isFlashOn) {
+        await _cameraController!.setFlashMode(FlashMode.off);
+        setState(() => _isFlashOn = false);
+        provider.speak('Lampu senter mati.');
+      } else {
+        await _cameraController!.setFlashMode(FlashMode.torch);
+        setState(() => _isFlashOn = true);
+        provider.speak('Lampu senter menyala untuk memperjelas obat.');
+      }
+    } catch (e) {
+      debugPrint('Flash error: $e');
+    }
+  }
+
+  void _captureAndAnalyze() async {
+    if (_isAnalyzing) return;
+    final provider = context.read<MedicineProvider>();
+    provider.triggerHaptic('alert');
     provider.stopSpeech();
 
     String? b64Image;
@@ -84,10 +107,10 @@ class _ScanScreenState extends State<ScanScreen> {
       _analyzedData = null;
       _matchedDoctorRx = null;
       _isSaved = false;
-      _analyzingStep = 'Mendeteksi kemasan obat dengan AI...';
+      _analyzingStep = 'Menganalisis kemasan obat dengan AI...';
     });
 
-    provider.speak('Sedang memproses pemindaian obat dengan kecerdasan buatan.');
+    provider.speak('Foto diambil. Sedang memproses analisis obat.');
 
     try {
       final res = await provider.analyzeMedicineApi(
@@ -95,8 +118,9 @@ class _ScanScreenState extends State<ScanScreen> {
         query: query,
       );
 
-      final medName = res['nama'] ?? query ?? 'Obat Terdeteksi';
-      final docMatch = provider.findDoctorPrescriptionMatch(medName);
+      final isMed = res['isMedicine'] != false;
+      final medName = res['nama'] ?? query ?? 'Kemasan Tidak Dikenali';
+      final docMatch = isMed ? provider.findDoctorPrescriptionMatch(medName) : null;
 
       if (mounted) {
         setState(() {
@@ -104,7 +128,12 @@ class _ScanScreenState extends State<ScanScreen> {
           _matchedDoctorRx = docMatch;
         });
 
-        if (docMatch != null) {
+        if (!isMed) {
+          provider.triggerHaptic('warning');
+          final guideText = res['teksPanduanSuara'] ??
+              'Objek di depan kamera bukan kemasan obat. Arahkan kamera ke strip atau botol obat Anda.';
+          provider.speak(guideText);
+        } else if (docMatch != null) {
           provider.triggerHaptic('success');
           final text =
               'Obat cocok dengan resep dokter Anda. ${docMatch.spokeSummary}. Catatan dokter: ${docMatch.doctorNotes ?? "Minum teratur"}.';
@@ -128,7 +157,7 @@ class _ScanScreenState extends State<ScanScreen> {
   }
 
   void _saveToCabinet() {
-    if (_analyzedData == null) return;
+    if (_analyzedData == null || _analyzedData!['isMedicine'] == false) return;
     final provider = context.read<MedicineProvider>();
 
     final rx = _matchedDoctorRx;
@@ -138,7 +167,7 @@ class _ScanScreenState extends State<ScanScreen> {
       genericName: _analyzedData!['namaGenerik'] ?? _analyzedData!['nama'] ?? '',
       dosage: rx?.dosage ?? _analyzedData!['kandungan'] ?? 'Sesuai resep',
       category: rx != null ? 'Obat Resep Terverifikasi Dokter' : (_analyzedData!['kategori'] ?? 'Obat Resep'),
-      status: rx != null ? 'safe' : 'safe',
+      status: 'safe',
       statusLabel: rx != null ? 'Cocok Resep Dokter' : 'Aman Dikonsumsi',
       instructions: rx?.instructions ?? _analyzedData!['aturanPakai'] ?? '1 kali sehari sesudah makan',
       timing: rx?.timing ?? _analyzedData!['timing'] ?? 'after_meal',
@@ -160,6 +189,9 @@ class _ScanScreenState extends State<ScanScreen> {
       _isSaved = false;
       _searchController.clear();
     });
+    final provider = context.read<MedicineProvider>();
+    provider.triggerHaptic('click');
+    provider.speak('Kamera aktif kembali. Ketuk layar dua kali untuk memotret.');
   }
 
   @override
@@ -175,334 +207,478 @@ class _ScanScreenState extends State<ScanScreen> {
     final isHC = provider.profile.settings.highContrast;
 
     return Scaffold(
+      backgroundColor: isHC ? Colors.black : const Color(0xFF090D16),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: isHC ? Colors.black : const Color(0xFF131B2E),
         elevation: 0,
         title: Text(
-          'Pemindai Obat Cerdas',
+          'Pemindai Obat',
           style: TextStyle(
             color: isHC ? const Color(0xFFFFE600) : Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
         actions: [
+          IconButton(
+            tooltip: _isFlashOn ? 'Matikan Lampu Senter' : 'Nyalakan Lampu Senter',
+            icon: Icon(
+              _isFlashOn ? Icons.flash_on : Icons.flash_off,
+              color: isHC ? const Color(0xFFFFE600) : Colors.amber,
+            ),
+            onPressed: _toggleFlash,
+          ),
           if (_analyzedData != null)
             IconButton(
+              tooltip: 'Pindai Ulang',
               icon: Icon(Icons.refresh, color: isHC ? const Color(0xFFFFE600) : Colors.white),
               onPressed: _resetScan,
             ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Camera Area / Captured Viewport
-            if (_analyzedData == null) ...[
-              Semantics(
-                label: 'Area Kamera Pemindai. Ketuk di mana saja pada layar ini untuk memotret dan memindai obat.',
-                button: true,
-                child: InkWell(
-                  onTap: _isAnalyzing ? null : _captureAndAnalyze,
-                  borderRadius: BorderRadius.circular(24),
-                  child: Container(
-                    height: 340,
-                    decoration: BoxDecoration(
-                      color: Colors.black,
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(
-                        color: isHC ? const Color(0xFFFFE600) : Colors.blueAccent.withValues(alpha: 0.4),
-                        width: isHC ? 3 : 1.5,
-                      ),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        if (_isCameraReady && _cameraController != null)
-                          CameraPreview(_cameraController!)
-                        else
-                          Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.camera_alt, size: 48, color: isHC ? const Color(0xFFFFE600) : Colors.white38),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'Kamera Siap. Ketuk Layar untuk Memotret',
-                                  style: TextStyle(color: isHC ? const Color(0xFFFFE600) : Colors.white70, fontSize: 13),
-                                ),
-                              ],
-                            ),
-                          ),
+      body: _analyzedData == null
+          ? _buildCameraViewfinder(provider, isHC)
+          : _buildResultView(provider, isHC),
+    );
+  }
 
-                        // Viewfinder Frame
-                        Positioned.fill(
-                          child: Padding(
-                            padding: const EdgeInsets.all(24.0),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                border: Border.all(
-                                  color: isHC ? const Color(0xFFFFE600) : const Color(0xFF10B981).withValues(alpha: 0.6),
-                                  width: 2,
-                                ),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        // Analyzing spinner overlay
-                        if (_isAnalyzing)
-                          Container(
-                            color: Colors.black.withValues(alpha: 0.8),
-                            child: Center(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  CircularProgressIndicator(color: isHC ? const Color(0xFFFFE600) : Colors.blueAccent),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    _analyzingStep,
-                                    style: TextStyle(color: isHC ? const Color(0xFFFFE600) : Colors.white, fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
+  Widget _buildCameraViewfinder(MedicineProvider provider, bool isHC) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onDoubleTap: _captureAndAnalyze,
+      onTap: () {
+        provider.triggerHaptic('click');
+        provider.speak('Kamera siap. Ketuk layar dua kali dengan cepat untuk memotret.');
+      },
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Camera Preview with Exact Aspect Ratio (No Stretching/Gepeng)
+          if (_isCameraReady && _cameraController != null)
+            Center(
+              child: AspectRatio(
+                aspectRatio: 1 / _cameraController!.value.aspectRatio,
+                child: CameraPreview(_cameraController!),
               ),
-
-              const SizedBox(height: 16),
-
-              // Manual Search Fallback
-              Row(
+            )
+          else
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      style: TextStyle(color: isHC ? const Color(0xFFFFE600) : Colors.white, fontSize: 13),
-                      decoration: InputDecoration(
-                        hintText: 'Atau ketik nama obat (misal: Paracetamol)...',
-                        hintStyle: TextStyle(color: isHC ? const Color(0xFFFFE600).withValues(alpha: 0.5) : const Color(0xFF64748B)),
-                        prefixIcon: Icon(Icons.search, color: isHC ? const Color(0xFFFFE600) : Colors.white54),
-                        filled: true,
-                        fillColor: isHC ? Colors.black : const Color(0xFF131B2E),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: isHC ? const Color(0xFFFFE600) : Colors.white12),
-                        ),
-                      ),
-                      onSubmitted: (val) {
-                        if (val.trim().isNotEmpty) _runAnalysis(query: val.trim());
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isHC ? const Color(0xFFFFE600) : const Color(0xFF2563EB),
-                      foregroundColor: isHC ? Colors.black : Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    ),
-                    onPressed: () {
-                      if (_searchController.text.trim().isNotEmpty) {
-                        _runAnalysis(query: _searchController.text.trim());
-                      }
-                    },
-                    child: const Text('Cari', style: TextStyle(fontWeight: FontWeight.bold)),
+                  Icon(Icons.camera_alt, size: 64, color: isHC ? const Color(0xFFFFE600) : Colors.white38),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Menyiapkan Kamera...',
+                    style: TextStyle(color: isHC ? const Color(0xFFFFE600) : Colors.white70, fontSize: 16),
                   ),
                 ],
               ),
-            ],
+            ),
 
-            // Analyzed Result Screen
-            if (_analyzedData != null) ...[
-              // Banner Cocok Resep Dokter (Bolo Doctor Cross-Check)
-              if (_matchedDoctorRx != null) ...[
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: isHC ? Colors.black : const Color(0xFF064E3B).withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isHC ? const Color(0xFFFFE600) : const Color(0xFF10B981),
-                      width: isHC ? 3 : 2,
+          // Tunanetra Guidance Overlay Frame (High-Contrast Viewfinder)
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Top Status Pill
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.8),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: isHC ? const Color(0xFFFFE600) : const Color(0xFF10B981),
+                        width: isHC ? 3 : 1.5,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.touch_app,
+                          size: 18,
+                          color: isHC ? const Color(0xFFFFE600) : const Color(0xFF34D399),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'KETUK 2X DI MANA SAJA UNTUK MEMOTRET',
+                          style: TextStyle(
+                            color: isHC ? const Color(0xFFFFE600) : Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: isHC ? const Color(0xFFFFE600) : const Color(0xFF10B981).withValues(alpha: 0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(Icons.medical_services, color: isHC ? Colors.black : const Color(0xFF34D399)),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: isHC ? const Color(0xFFFFE600) : const Color(0xFF10B981),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                'COCOK REKAMAN DOKTER (${_matchedDoctorRx!.frequency})',
-                                style: const TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.w900),
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              _matchedDoctorRx!.instructions,
-                              style: TextStyle(
-                                color: isHC ? const Color(0xFFFFE600) : Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                            if (_matchedDoctorRx!.doctorNotes != null) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                'Catatan: ${_matchedDoctorRx!.doctorNotes}',
-                                style: TextStyle(
-                                  color: isHC ? const Color(0xFFFFE600) : const Color(0xFF6EE7B7),
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                            const SizedBox(height: 10),
-                            OutlinedButton.icon(
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: isHC ? const Color(0xFFFFE600) : const Color(0xFF34D399),
-                                side: BorderSide(color: isHC ? const Color(0xFFFFE600) : const Color(0xFF34D399)),
-                              ),
-                              icon: const Icon(Icons.volume_up, size: 16),
-                              label: const Text('Putar Ulang Arahan Dokter', style: TextStyle(fontSize: 11)),
-                              onPressed: () => provider.speak(_matchedDoctorRx!.spokeSummary),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-              ],
 
-              // Detail Obat Utama Card
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: isHC ? Colors.black : const Color(0xFF131B2E),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: isHC ? const Color(0xFFFFE600) : Colors.white12,
-                    width: isHC ? 3 : 1,
+                  // Center Guidance Frame
+                  Container(
+                    height: 240,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: isHC ? const Color(0xFFFFE600) : const Color(0xFF38BDF8).withValues(alpha: 0.8),
+                        width: isHC ? 4 : 2,
+                      ),
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'Arahkan Kemasan Obat ke Sini',
+                        style: TextStyle(
+                          color: isHC ? const Color(0xFFFFE600) : Colors.white.withValues(alpha: 0.8),
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          backgroundColor: Colors.black54,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                  // Bottom Controls Bar
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.85),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: isHC ? const Color(0xFFFFE600) : Colors.white12,
+                        width: isHC ? 3 : 1,
+                      ),
+                    ),
+                    child: Row(
                       children: [
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _analyzedData!['nama'] ?? 'Obat',
-                                style: TextStyle(
-                                  color: isHC ? const Color(0xFFFFE600) : Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 20,
-                                ),
+                          child: TextField(
+                            controller: _searchController,
+                            style: TextStyle(color: isHC ? const Color(0xFFFFE600) : Colors.white, fontSize: 13),
+                            decoration: InputDecoration(
+                              hintText: 'Ketik nama obat jika kamera sulit...',
+                              hintStyle: TextStyle(
+                                color: isHC
+                                    ? const Color(0xFFFFE600).withValues(alpha: 0.5)
+                                    : const Color(0xFF64748B),
+                                fontSize: 12,
                               ),
-                              Text(
-                                '${_analyzedData!["namaGenerik"] ?? ""} • ${_analyzedData!["kandungan"] ?? ""}',
-                                style: TextStyle(
-                                  color: isHC ? const Color(0xFFFFE600) : const Color(0xFF94A3B8),
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
+                              prefixIcon: Icon(Icons.search, color: isHC ? const Color(0xFFFFE600) : Colors.white54, size: 20),
+                              border: InputBorder.none,
+                              isDense: true,
+                            ),
+                            onSubmitted: (val) {
+                              if (val.trim().isNotEmpty) _runAnalysis(query: val.trim());
+                            },
                           ),
                         ),
                         IconButton(
-                          icon: Icon(Icons.volume_up, size: 28, color: isHC ? const Color(0xFFFFE600) : const Color(0xFF10B981)),
+                          icon: Icon(Icons.send, color: isHC ? const Color(0xFFFFE600) : const Color(0xFF38BDF8)),
                           onPressed: () {
-                            final text = _matchedDoctorRx != null
-                                ? _matchedDoctorRx!.spokeSummary
-                                : (_analyzedData!['teksPanduanSuara'] ?? '${_analyzedData!["nama"]}. ${_analyzedData!["aturanPakai"]}');
-                            provider.speak(text);
+                            if (_searchController.text.trim().isNotEmpty) {
+                              _runAnalysis(query: _searchController.text.trim());
+                            }
                           },
                         ),
                       ],
                     ),
+                  ),
+                ],
+              ),
+            ),
+          ),
 
-                    const Divider(color: Colors.white12, height: 24),
-
-                    _InfoRow(label: 'Indikasi / Khasiat', value: _analyzedData!['indikasi'] ?? '-', isHC: isHC),
-                    _InfoRow(label: 'Aturan Pakai', value: _matchedDoctorRx?.instructions ?? _analyzedData!['aturanPakai'] ?? '-', isHC: isHC),
-                    _InfoRow(
-                      label: 'Waktu Minum',
-                      value: '${_matchedDoctorRx?.timingLabel ?? (_analyzedData!["timing"] == "before_meal" ? "Sebelum Makan" : "Setelah Makan")} (${_analyzedData!["rekomendasiJam"] ?? "08:00"})',
-                      isHC: isHC,
+          // Loading / Analyzing Overlay
+          if (_isAnalyzing)
+            Container(
+              color: Colors.black.withValues(alpha: 0.85),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      height: 54,
+                      width: 54,
+                      child: CircularProgressIndicator(
+                        color: isHC ? const Color(0xFFFFE600) : const Color(0xFF38BDF8),
+                        strokeWidth: 4,
+                      ),
                     ),
-                    _InfoRow(label: 'Izin BPOM', value: _analyzedData!['bpom'] ?? 'BPOM Terverifikasi', isHC: isHC),
-
                     const SizedBox(height: 20),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: isHC ? const Color(0xFFFFE600) : Colors.white70,
-                              side: BorderSide(color: isHC ? const Color(0xFFFFE600) : Colors.white24),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            ),
-                            onPressed: _resetScan,
-                            child: const Text('Pindai Ulang', style: TextStyle(fontWeight: FontWeight.bold)),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _isSaved
-                                  ? Colors.grey
-                                  : (isHC ? const Color(0xFFFFE600) : const Color(0xFF10B981)),
-                              foregroundColor: isHC ? Colors.black : Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            ),
-                            icon: Icon(_isSaved ? Icons.check : Icons.add_circle),
-                            label: Text(_isSaved ? 'Tersimpan' : 'Simpan ke Lemari', style: const TextStyle(fontWeight: FontWeight.bold)),
-                            onPressed: _isSaved ? null : _saveToCabinet,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      _analyzingStep,
+                      style: TextStyle(
+                        color: isHC ? const Color(0xFFFFE600) : Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Mohon tunggu sebentar...',
+                      style: TextStyle(
+                        color: isHC ? const Color(0xFFFFE600) : Colors.white70,
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ),
               ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResultView(MedicineProvider provider, bool isHC) {
+    final isMed = _analyzedData!['isMedicine'] != false;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Kasus 1: BUKAN OBAT (Tisu, Makanan, Perabotan, dll)
+          if (!isMed) ...[
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: isHC ? Colors.black : const Color(0xFF450A0A),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: isHC ? const Color(0xFFFFE600) : Colors.redAccent,
+                  width: isHC ? 3 : 2,
+                ),
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    size: 54,
+                    color: isHC ? const Color(0xFFFFE600) : Colors.redAccent,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    _analyzedData!['nama'] ?? 'Bukan Kemasan Obat',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: isHC ? const Color(0xFFFFE600) : Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _analyzedData!['indikasi'] ??
+                        'Objek yang tertangkap kamera tidak menyerupai kemasan obat, tablet, sirup, atau resep dokter yang sah.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: isHC ? const Color(0xFFFFE600) : const Color(0xFFFECACA),
+                      fontSize: 13,
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isHC ? const Color(0xFFFFE600) : Colors.redAccent,
+                      foregroundColor: isHC ? Colors.black : Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Pindai Ulang (Ketuk 2x)', style: TextStyle(fontWeight: FontWeight.bold)),
+                    onPressed: _resetScan,
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
+            // Kasus 2: OBAT SAH
+            // Banner Cocok Resep Dokter (Bolo Doctor Cross-Check)
+            if (_matchedDoctorRx != null) ...[
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isHC ? Colors.black : const Color(0xFF064E3B).withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isHC ? const Color(0xFFFFE600) : const Color(0xFF10B981),
+                    width: isHC ? 3 : 2,
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: isHC ? const Color(0xFFFFE600) : const Color(0xFF10B981).withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.medical_services, color: isHC ? Colors.black : const Color(0xFF34D399)),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: isHC ? const Color(0xFFFFE600) : const Color(0xFF10B981),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'COCOK REKAMAN DOKTER (${_matchedDoctorRx!.frequency})',
+                              style: const TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.w900),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            _matchedDoctorRx!.instructions,
+                            style: TextStyle(
+                              color: isHC ? const Color(0xFFFFE600) : Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          if (_matchedDoctorRx!.doctorNotes != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              'Catatan: ${_matchedDoctorRx!.doctorNotes}',
+                              style: TextStyle(
+                                color: isHC ? const Color(0xFFFFE600) : const Color(0xFF6EE7B7),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 10),
+                          OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: isHC ? const Color(0xFFFFE600) : const Color(0xFF34D399),
+                              side: BorderSide(color: isHC ? const Color(0xFFFFE600) : const Color(0xFF34D399)),
+                            ),
+                            icon: const Icon(Icons.volume_up, size: 16),
+                            label: const Text('Putar Ulang Arahan Dokter', style: TextStyle(fontSize: 11)),
+                            onPressed: () => provider.speak(_matchedDoctorRx!.spokeSummary),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
             ],
+
+            // Detail Kartu Obat Utama
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: isHC ? Colors.black : const Color(0xFF131B2E),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: isHC ? const Color(0xFFFFE600) : Colors.white12,
+                  width: isHC ? 3 : 1,
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _analyzedData!['nama'] ?? 'Obat Teridentifikasi',
+                              style: TextStyle(
+                                color: isHC ? const Color(0xFFFFE600) : Colors.white,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 20,
+                              ),
+                            ),
+                            Text(
+                              '${_analyzedData!["namaGenerik"] ?? ""} • ${_analyzedData!["kandungan"] ?? ""}',
+                              style: TextStyle(
+                                color: isHC ? const Color(0xFFFFE600) : const Color(0xFF94A3B8),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Dengarkan Ulang Suara Penjelasan',
+                        icon: Icon(Icons.volume_up, size: 30, color: isHC ? const Color(0xFFFFE600) : const Color(0xFF10B981)),
+                        onPressed: () {
+                          final text = _matchedDoctorRx != null
+                              ? _matchedDoctorRx!.spokeSummary
+                              : (_analyzedData!['teksPanduanSuara'] ?? '${_analyzedData!["nama"]}. ${_analyzedData!["aturanPakai"]}');
+                          provider.speak(text);
+                        },
+                      ),
+                    ],
+                  ),
+
+                  const Divider(color: Colors.white12, height: 24),
+
+                  _InfoRow(label: 'Indikasi / Khasiat', value: _analyzedData!['indikasi'] ?? '-', isHC: isHC),
+                  _InfoRow(
+                    label: 'Aturan Pakai',
+                    value: _matchedDoctorRx?.instructions ?? _analyzedData!['aturanPakai'] ?? '-',
+                    isHC: isHC,
+                  ),
+                  _InfoRow(
+                    label: 'Waktu Minum',
+                    value:
+                        '${_matchedDoctorRx?.timingLabel ?? (_analyzedData!["timing"] == "before_meal" ? "Sebelum Makan" : "Setelah Makan")} (${_analyzedData!["rekomendasiJam"] ?? "08:00"})',
+                    isHC: isHC,
+                  ),
+                  _InfoRow(label: 'Izin BPOM', value: _analyzedData!['bpom'] ?? 'BPOM Terverifikasi', isHC: isHC),
+
+                  const SizedBox(height: 20),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: isHC ? const Color(0xFFFFE600) : Colors.white70,
+                            side: BorderSide(color: isHC ? const Color(0xFFFFE600) : Colors.white24),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                          onPressed: _resetScan,
+                          child: const Text('Pindai Ulang', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _isSaved
+                                ? Colors.grey
+                                : (isHC ? const Color(0xFFFFE600) : const Color(0xFF10B981)),
+                            foregroundColor: isHC ? Colors.black : Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                          icon: Icon(_isSaved ? Icons.check : Icons.add_circle),
+                          label: Text(_isSaved ? 'Tersimpan' : 'Simpan ke Lemari', style: const TextStyle(fontWeight: FontWeight.bold)),
+                          onPressed: _isSaved ? null : _saveToCabinet,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }

@@ -329,44 +329,53 @@ class MedicineProvider extends ChangeNotifier {
         Uri.parse('$_apiBaseUrl/analyze'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'imageBase64': imageBase64,
+          'image': imageBase64,
           'query': query,
           'existingMedicines': _medicines.map((m) => m.name).toList(),
           'allergies': _profile.allergies,
           'conditions': _profile.conditions,
         }),
-      );
+      ).timeout(const Duration(seconds: 35));
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         if (data['success'] == true && data['data'] != null) {
           return data['data'];
         }
+      } else {
+        final err = jsonDecode(res.body);
+        return {
+          'isMedicine': false,
+          'nama': 'Gagal Menganalisis',
+          'teksPanduanSuara': err['error'] ?? 'Gagal menghubungi server analisis obat. Pastikan koneksi internet aktif.',
+        };
       }
     } catch (e) {
       debugPrint('Analyze API error: $e');
     }
 
-    // Offline fallback for testing / no internet
-    final name = query?.trim().isNotEmpty == true ? query!.trim() : 'Paracetamol 500mg';
+    // Safety fallback: Jika input BUKAN obat (misal tisu, kertas, atau scan gagal), JANGAN tebak Paracetamol!
+    if (query != null && query.trim().isNotEmpty) {
+      final qLower = query.toLowerCase();
+      if (qLower.contains('tisu') || qLower.contains('tissue') || qLower.contains('baju') || qLower.contains('kertas')) {
+        return {
+          'isMedicine': false,
+          'nama': 'Bukan Kemasan Obat',
+          'indikasi': 'Objek terdeteksi sebagai benda non-medis ($query).',
+          'aturanPakai': 'Tidak ada aturan pakai (bukan obat).',
+          'peringatan': 'Benda ini bukan obat farmasi untuk dikonsumsi.',
+          'teksPanduanSuara': 'Objek terdeteksi sebagai $query, bukan kemasan obat. Harap arahkan kamera ke strip atau botol obat Anda.',
+        };
+      }
+    }
+
     return {
-      'nama': name,
-      'namaGenerik': name,
-      'kandungan': '500 mg',
-      'bentuk': 'Tablet',
-      'kategori': 'Analgesik / Antipiretik',
-      'indikasi': 'Meredakan sakit kepala, demam, dan nyeri ringan hingga sedang.',
-      'aturanPakai': 'Diminum 3 kali sehari 1 tablet setelah makan.',
-      'timing': 'after_meal',
-      'rekomendasiJam': '08:00',
-      'kadaluarsa': 'Desember 2027',
-      'bpom': 'BPOM RI DTL1234567890A1',
-      'efekSamping': ['Mual ringan', 'Mengantuk'],
-      'peringatan': 'Hentikan bila timbul reaksi alergi atau ruam kulit.',
-      'pantangan': [
-        {'makanan': 'Alkohol', 'alasan': 'Meningkatkan risiko kerusakan hati.'}
-      ],
-      'teksPanduanSuara': 'Obat teridentifikasi $name. Diminum 3 kali sehari 1 tablet setelah makan.',
+      'isMedicine': false,
+      'nama': 'Kemasan Obat Tidak Dikenali',
+      'indikasi': 'Gambar tidak jelas atau objek di depan kamera bukan obat yang sah.',
+      'aturanPakai': 'Posisikan ulang kemasan obat di depan kamera.',
+      'peringatan': 'Pastikan teks pada kemasan obat terlihat jelas dan pencahayaan memadai.',
+      'teksPanduanSuara': 'Maaf, objek tidak dikenali sebagai kemasan obat. Posisikan strip atau botol obat sekitar 15 sentimeter di depan kamera dan ketuk dua kali untuk mencoba lagi.',
     };
   }
 }
